@@ -207,7 +207,7 @@ export default function Login() {
           </p>
         </div>
         
-        <div className="mt-6 pt-6 border-t">
+        {/* <div className="mt-6 pt-6 border-t">
           <p className="text-xs text-center text-gray-500 mb-3">Demo Accounts:</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="bg-gray-50 p-2 rounded">
@@ -221,7 +221,7 @@ export default function Login() {
               <p className="text-gray-400">farmer123</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )

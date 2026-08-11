@@ -1,129 +1,125 @@
-import { useState, useEffect } from 'react'
-import { Droplet, Thermometer, Wind, Sun, Activity, WifiOff } from 'lucide-react'
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useEffect, useState } from 'react'
+import { Activity, Wifi, WifiOff, Gauge, ShieldCheck, Zap } from 'lucide-react'
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import StatsCard from '../components/dashboard/StatsCard'
+import SensorCard from '../components/dashboard/SensorCard'
 import WeatherWidget from '../components/dashboard/WeatherWidget'
 import CropStatus from '../components/dashboard/CropStatus'
 import Card from '../components/common/Card'
-import Loader from '../components/common/Loader'
-import { useWebSocket } from '../hooks/useWebSocket'
-import useStore from '../store/useStore'
+import { SkeletonCard, SkeletonChart } from '../components/common/Skeleton'
+import { useSensorFeed } from '../hooks/useSensorFeed'
+import { sensorDefinitions } from '../utils/constants'
 
 export default function IoTDashboard() {
-  const { sensorData, updateSensorData } = useStore()
-  const [historicalData, setHistoricalData] = useState([])
+  const { readings, history, isConnected } = useSensorFeed()
   const [loading, setLoading] = useState(true)
 
-  const { isConnected } = useWebSocket('sensorData', (data) => {
-    updateSensorData(data)
-  })
-
   useEffect(() => {
-    // Simulate loading historical data
-    setTimeout(() => {
-      const mockData = Array.from({ length: 24 }, (_, i) => ({
-        time: `${i}:00`,
-        moisture: 40 + Math.random() * 40,
-        temperature: 20 + Math.random() * 15,
-        humidity: 50 + Math.random() * 30,
-      }))
-      setHistoricalData(mockData)
-      setLoading(false)
-    }, 1000)
+    const t = setTimeout(() => setLoading(false), 900)
+    return () => clearTimeout(t)
   }, [])
 
+  const combinedTrend = history.soilMoisture?.map((point, i) => ({
+    time: point.time,
+    moisture: point.value,
+    temperature: history.temperature?.[i]?.value,
+    humidity: history.humidity?.[i]?.value,
+  })) || []
+
+  const activeAlerts = sensorDefinitions.filter((s) => {
+    const v = readings[s.id]
+    return v !== undefined && (v < s.thresholds.low || v > s.thresholds.high)
+  }).length
+
   if (loading) {
-    return <Loader fullScreen />
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+        <SkeletonChart />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">IoT Dashboard</h1>
-          <p className="text-gray-600 mt-1">Real-time sensor monitoring and analytics</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Farm Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">Real-time sensor monitoring across your fields</p>
         </div>
-        <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${isConnected ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`}>
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-success animate-pulse' : 'bg-danger'}`} />
-          <span className="text-sm font-medium">
-            {isConnected ? 'Live Data' : 'Connecting...'}
-          </span>
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full w-fit ${isConnected ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+          {isConnected ? <Wifi size={15} /> : <WifiOff size={15} />}
+          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-success animate-pulse' : 'bg-danger'}`} />
+          <span className="text-sm font-medium">{isConnected ? 'Live Data' : 'Reconnecting...'}</span>
         </div>
       </div>
-      
-      {/* Stats Cards */}
+
+      {/* Summary KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard 
-          title="Soil Moisture"
-          value={sensorData.moisture || 65}
-          icon={Droplet}
-          color="text-blue-600"
-          trend="+5%"
-          unit="%"
-        />
-        <StatsCard 
-          title="Temperature"
-          value={sensorData.temperature || 28}
-          icon={Thermometer}
-          color="text-red-600"
-          trend="-2%"
-          unit="°C"
-        />
-        <StatsCard 
-          title="Humidity"
-          value={sensorData.humidity || 72}
-          icon={Wind}
-          color="text-green-600"
-          trend="+3%"
-          unit="%"
-        />
-        <StatsCard 
-          title="Light Intensity"
-          value={((sensorData.light || 45000) / 1000).toFixed(1)}
-          icon={Sun}
-          color="text-yellow-600"
-          trend="+12%"
-          unit="k lux"
-        />
+        <StatsCard title="Soil Moisture" value={readings.soilMoisture} icon={Gauge} tone="green" trend="+5%" unit="%" />
+        <StatsCard title="Active Alerts" value={activeAlerts} icon={ShieldCheck} tone={activeAlerts > 0 ? 'red' : 'green'} unit="sensors" />
+        <StatsCard title="System Uptime" value="99.8" icon={Activity} tone="blue" trend="+0.1%" unit="%" />
+        <StatsCard title="Power Draw" value="4.2" icon={Zap} tone="orange" trend="-3%" unit="kWh" />
       </div>
-      
+
+      {/* 6 Sensor Cards */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Sensor Fleet</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sensorDefinitions.map((sensor) => (
+            <SensorCard
+              key={sensor.id}
+              sensor={sensor}
+              value={readings[sensor.id]}
+              history={history[sensor.id]}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <h3 className="text-lg font-semibold mb-4">Soil Moisture Trend</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={historicalData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis />
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={combinedTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+              <XAxis dataKey="time" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Area type="monotone" dataKey="moisture" stroke="#2e7d32" fill="#4caf50" fillOpacity={0.3} />
+              <Area type="monotone" dataKey="moisture" stroke="#2e7d32" fill="#4caf50" fillOpacity={0.25} strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </Card>
-        
+
         <Card>
-          <h3 className="text-lg font-semibold mb-4">Temperature & Humidity</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={historicalData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis />
+          <h3 className="text-lg font-semibold mb-4">Temperature &amp; Humidity (DHT22)</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={combinedTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+              <XAxis dataKey="time" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Line type="monotone" dataKey="temperature" stroke="#f44336" strokeWidth={2} />
-              <Line type="monotone" dataKey="humidity" stroke="#2196f3" strokeWidth={2} />
+              <Legend />
+              <Line type="monotone" dataKey="temperature" name="Temp (°C)" stroke="#f97316" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="humidity" name="Humidity (%)" stroke="#0ea5e9" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
       </div>
-      
+
       {/* Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <WeatherWidget />
         <CropStatus />
       </div>
-      
+
       {/* Irrigation Status */}
       <Card>
         <div className="flex items-center justify-between mb-4">
@@ -136,19 +132,19 @@ export default function IoTDashboard() {
         <div className="space-y-4">
           <div>
             <div className="flex justify-between mb-2">
-              <span className="text-sm text-gray-600">Zone 1 - Wheat Field</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Zone 1 - Wheat Field</span>
               <span className="text-sm font-medium">65%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
               <div className="bg-primary rounded-full h-2 transition-all duration-500" style={{ width: '65%' }} />
             </div>
           </div>
           <div>
             <div className="flex justify-between mb-2">
-              <span className="text-sm text-gray-600">Zone 2 - Rice Field</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Zone 2 - Rice Field</span>
               <span className="text-sm font-medium">45%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
               <div className="bg-warning rounded-full h-2 transition-all duration-500" style={{ width: '45%' }} />
             </div>
           </div>

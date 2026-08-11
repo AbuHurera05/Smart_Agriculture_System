@@ -1,78 +1,19 @@
 import { useState } from 'react'
 import { 
   GraduationCap, Calendar, MapPin, Users, Clock, Video,
-  BookOpen, Award, Filter, Search, Star, TrendingUp,
-  CheckCircle, ExternalLink, UserPlus
+  Award, Search, Star, TrendingUp, ExternalLink, UserPlus
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
+import useDataStore from '../store/useDataStore'
+import { useAuthContext } from '../context/AuthContext'
 
 export default function TrainingWorkshops() {
+  const { user } = useAuthContext()
+  const { workshops, enrollInWorkshop } = useDataStore()
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-
-  const workshops = [
-    {
-      id: 1,
-      title: 'Advanced Organic Farming Techniques',
-      instructor: 'Dr. Rajesh Kumar',
-      date: '2024-04-15',
-      time: '10:00 AM - 4:00 PM',
-      venue: 'Agricultural University, Ludhiana',
-      type: 'in-person',
-      capacity: 50,
-      enrolled: 32,
-      price: 'Free',
-      rating: 4.8,
-      image: '🌱',
-      topics: ['Composting', 'Natural Pest Control', 'Crop Rotation']
-    },
-    {
-      id: 2,
-      title: 'Smart Irrigation Systems',
-      instructor: 'Prof. Sarah Wilson',
-      date: '2024-04-20',
-      time: '2:00 PM - 5:00 PM',
-      venue: 'Online (Zoom)',
-      type: 'online',
-      capacity: 100,
-      enrolled: 67,
-      price: '₹499',
-      rating: 4.9,
-      image: '💧',
-      topics: ['Drip Irrigation', 'Sensor Integration', 'Water Management']
-    },
-    {
-      id: 3,
-      title: 'Crop Disease Detection Using AI',
-      instructor: 'Dr. Amit Sharma',
-      date: '2024-04-25',
-      time: '11:00 AM - 2:00 PM',
-      venue: 'Online (Zoom)',
-      type: 'online',
-      capacity: 150,
-      enrolled: 98,
-      price: '₹299',
-      rating: 4.7,
-      image: '🤖',
-      topics: ['Machine Learning', 'Image Recognition', 'Early Detection']
-    },
-    {
-      id: 4,
-      title: 'Sustainable Farming Practices',
-      instructor: 'Dr. Priya Mehta',
-      date: '2024-05-05',
-      time: '9:00 AM - 5:00 PM',
-      venue: 'Community Center, Delhi',
-      type: 'in-person',
-      capacity: 75,
-      enrolled: 45,
-      price: '₹799',
-      rating: 4.6,
-      image: '🌍',
-      topics: ['Soil Conservation', 'Water Harvesting', 'Biodiversity']
-    }
-  ]
 
   const certifications = [
     { name: 'Organic Farming Certification', duration: '3 months', level: 'Advanced', provider: 'NABARD' },
@@ -80,10 +21,22 @@ export default function TrainingWorkshops() {
     { name: 'Precision Farming Expert', duration: '1 month', level: 'Beginner', provider: 'IIT Delhi' },
   ]
 
-  const filteredWorkshops = workshops.filter(w => 
+  // Farmers only see live sessions that experts have published (not completed ones)
+  const visibleWorkshops = workshops.filter(w => w.status !== 'completed')
+
+  const filteredWorkshops = visibleWorkshops.filter(w => 
     (filter === 'all' || w.type === filter) &&
     (searchTerm === '' || w.title.toLowerCase().includes(searchTerm.toLowerCase()))
   )
+
+  const handleEnroll = (workshop) => {
+    if (workshop.enrolled >= workshop.capacity) {
+      toast.error('This session is full')
+      return
+    }
+    enrollInWorkshop(workshop.id)
+    toast.success(`Enrolled in "${workshop.title}"`)
+  }
 
   return (
     <div className="space-y-6">
@@ -99,7 +52,7 @@ export default function TrainingWorkshops() {
           <div className="flex items-center gap-3">
             <GraduationCap className="w-8 h-8 text-primary" />
             <div>
-              <p className="text-2xl font-bold">12</p>
+              <p className="text-2xl font-bold">{visibleWorkshops.length}</p>
               <p className="text-sm text-gray-500">Active Workshops</p>
             </div>
           </div>
@@ -108,8 +61,8 @@ export default function TrainingWorkshops() {
           <div className="flex items-center gap-3">
             <Users className="w-8 h-8 text-primary" />
             <div>
-              <p className="text-2xl font-bold">2,345</p>
-              <p className="text-sm text-gray-500">Farmers Trained</p>
+              <p className="text-2xl font-bold">{visibleWorkshops.reduce((sum, w) => sum + (w.enrolled || 0), 0)}</p>
+              <p className="text-sm text-gray-500">Farmers Enrolled</p>
             </div>
           </div>
         </Card>
@@ -117,7 +70,7 @@ export default function TrainingWorkshops() {
           <div className="flex items-center gap-3">
             <Award className="w-8 h-8 text-primary" />
             <div>
-              <p className="text-2xl font-bold">8</p>
+              <p className="text-2xl font-bold">{certifications.length}</p>
               <p className="text-sm text-gray-500">Certifications</p>
             </div>
           </div>
@@ -163,63 +116,72 @@ export default function TrainingWorkshops() {
       </div>
 
       {/* Workshops Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredWorkshops.map(workshop => (
-          <Card key={workshop.id} hover>
-            <div className="flex gap-4">
-              <div className="text-5xl">{workshop.image}</div>
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">{workshop.title}</h3>
-                    <p className="text-sm text-gray-600">by {workshop.instructor}</p>
+      {filteredWorkshops.length === 0 ? (
+        <Card className="text-center py-12">
+          <GraduationCap className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-500">No workshops match your search yet.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredWorkshops.map(workshop => (
+            <Card key={workshop.id} hover>
+              <div className="flex gap-4">
+                <div className="text-5xl">{workshop.image}</div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">{workshop.title}</h3>
+                      <p className="text-sm text-gray-600">by {workshop.instructor}</p>
+                    </div>
+                    {workshop.rating > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="text-sm font-medium">{workshop.rating}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span className="text-sm font-medium">{workshop.rating}</span>
+                  
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="w-4 h-4" />
+                      <span>{workshop.date}</span>
+                      <Clock className="w-4 h-4 ml-2" />
+                      <span>{workshop.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <MapPin className="w-4 h-4" />
+                      <span>{workshop.venue}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users className="w-4 h-4" />
+                      <span>{workshop.enrolled}/{workshop.capacity} enrolled</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar className="w-4 h-4" />
-                    <span>{workshop.date}</span>
-                    <Clock className="w-4 h-4 ml-2" />
-                    <span>{workshop.time}</span>
+                  
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(workshop.topics || []).map((topic, idx) => (
+                      <span key={idx} className="badge badge-info text-xs">
+                        {topic}
+                      </span>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span>{workshop.venue}</span>
+                  
+                  <div className="mt-4 flex items-center justify-between">
+                    <div>
+                      <span className="text-lg font-bold text-primary">{workshop.price}</span>
+                      {workshop.price !== 'Free' && <span className="text-xs text-gray-500"> per person</span>}
+                    </div>
+                    <Button variant="primary" size="sm" onClick={() => handleEnroll(workshop)}>
+                      {workshop.type === 'online' ? <Video className="w-4 h-4 mr-1" /> : <UserPlus className="w-4 h-4 mr-1" />}
+                      Enroll Now
+                    </Button>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="w-4 h-4" />
-                    <span>{workshop.enrolled}/{workshop.capacity} enrolled</span>
-                  </div>
-                </div>
-                
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {workshop.topics.map((topic, idx) => (
-                    <span key={idx} className="badge badge-info text-xs">
-                      {topic}
-                    </span>
-                  ))}
-                </div>
-                
-                <div className="mt-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-lg font-bold text-primary">{workshop.price}</span>
-                    {workshop.price !== 'Free' && <span className="text-xs text-gray-500"> per person</span>}
-                  </div>
-                  <Button variant="primary" size="sm">
-                    {workshop.type === 'online' ? <Video className="w-4 h-4 mr-1" /> : <UserPlus className="w-4 h-4 mr-1" />}
-                    Enroll Now
-                  </Button>
                 </div>
               </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Certifications Section */}
       <div>
@@ -242,39 +204,6 @@ export default function TrainingWorkshops() {
           ))}
         </div>
       </div>
-
-      {/* Upcoming Events Calendar */}
-      <Card>
-        <h3 className="text-lg font-semibold mb-4">Upcoming Events</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">15</p>
-                <p className="text-xs">Apr</p>
-              </div>
-              <div>
-                <p className="font-medium">Webinar: Sustainable Agriculture</p>
-                <p className="text-sm text-gray-500">10:00 AM - 12:00 PM</p>
-              </div>
-            </div>
-            <Button variant="secondary" size="sm">Remind Me</Button>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">22</p>
-                <p className="text-xs">Apr</p>
-              </div>
-              <div>
-                <p className="font-medium">Field Visit: Smart Farm Demo</p>
-                <p className="text-sm text-gray-500">2:00 PM - 5:00 PM</p>
-              </div>
-            </div>
-            <Button variant="secondary" size="sm">Remind Me</Button>
-          </div>
-        </div>
-      </Card>
     </div>
   )
 }

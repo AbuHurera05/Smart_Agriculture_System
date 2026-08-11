@@ -14,7 +14,7 @@ export default function CropStatus() {
       <h3 className="text-lg font-semibold mb-4">Active Crops</h3>
       <div className="space-y-4">
         {crops.map((crop, idx) => (
-          <div key={idx} className="border-b last:border-0 pb-3 last:pb-0">
+          <div key={idx} className="border-b border-gray-100 dark:border-white/10 last:border-0 pb-3 last:pb-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Sprout className="w-5 h-5 text-primary" />
@@ -29,15 +29,15 @@ export default function CropStatus() {
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <p className="text-gray-500">Stage</p>
+                <p className="text-gray-500 dark:text-gray-400">Stage</p>
                 <p className="font-medium">{crop.stage}</p>
               </div>
               <div>
-                <p className="text-gray-500">Days to Harvest</p>
+                <p className="text-gray-500 dark:text-gray-400">Days to Harvest</p>
                 <p className="font-medium">{crop.daysToHarvest} days</p>
               </div>
             </div>
-            <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+            <div className="mt-2 w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
               <div 
                 className="bg-primary rounded-full h-2 transition-all duration-500"
                 style={{ width: `${crop.health}%` }}

@@ -1,16 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Users, Settings, Database, Shield, Activity, BarChart3, 
   Plus, Edit2, Trash2, Eye, Search, Filter, Download, 
-  Upload, X, Check, AlertCircle, RefreshCw, ChevronDown,
-  Smartphone, Droplet, Sprout, CloudRain, Newspaper, Map,
-  TrendingUp, GraduationCap, Users as UsersIcon, Wifi
+  Upload, X, Check, RefreshCw, UserCheck, UserX, Clock,
+  Sprout, Newspaper, Map, TrendingUp, GraduationCap, Wifi,
+  Droplet
 } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '../context/AuthContext'
+import useDataStore from '../store/useDataStore'
 
 export default function AdminPanel() {
+  const navigate = useNavigate()
+  const {
+    users, adminAddUser, adminUpdateUser, adminDeleteUser,
+    expertRequests, approveExpertRequest, rejectExpertRequest,
+  } = useAuthContext()
+  const {
+    news, addNews, updateNews, deleteNews, togglePublishNews,
+    workshops, addWorkshop, updateWorkshop, deleteWorkshop,
+  } = useDataStore()
+
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -20,17 +33,12 @@ export default function AdminPanel() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // Data States
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Farmer', email: 'john@example.com', role: 'farmer', status: 'active', joinDate: '2024-01-15', farmSize: '5 acres', crops: ['Rice', 'Wheat'] },
-    { id: 2, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'expert', status: 'active', joinDate: '2024-01-20', specialization: 'Crop Disease', experience: '8 years' },
-    { id: 3, name: 'Mike Brown', email: 'mike@example.com', role: 'admin', status: 'active', joinDate: '2024-01-10', permissions: 'full' },
-  ])
-
+  // Data States (sensors & crops remain admin-curated reference data —
+  // per-user farm data lives in the individual User Detail view)
   const [sensors, setSensors] = useState([
-    { id: 1, name: 'Field Sensor A1', type: 'Soil Moisture', location: 'North Field', status: 'active', battery: '85%', lastReading: '2024-03-31 10:30', value: '65%' },
-    { id: 2, name: 'Weather Station', type: 'Weather', location: 'Central', status: 'active', battery: '92%', lastReading: '2024-03-31 10:28', value: '28°C' },
-    { id: 3, name: 'Irrigation Controller', type: 'Irrigation', location: 'South Field', status: 'maintenance', battery: '67%', lastReading: '2024-03-31 09:15', value: 'Active' },
+    { id: 1, name: 'Field Sensor A1', type: 'Soil Moisture', location: 'North Field', status: 'active', battery: '85%', lastReading: '2026-07-27 10:30', value: '65%' },
+    { id: 2, name: 'Weather Station', type: 'Weather', location: 'Central', status: 'active', battery: '92%', lastReading: '2026-07-27 10:28', value: '28°C' },
+    { id: 3, name: 'Irrigation Controller', type: 'Irrigation', location: 'South Field', status: 'maintenance', battery: '67%', lastReading: '2026-07-27 09:15', value: 'Active' },
   ])
 
   const [crops, setCrops] = useState([
@@ -39,32 +47,24 @@ export default function AdminPanel() {
     { id: 3, name: 'Maize', season: 'Kharif', duration: '90 days', waterReq: 'Medium', tempRange: '21-27°C', soilType: 'Well-drained loam', yield: '2.8 tons/acre' },
   ])
 
-  const [news, setNews] = useState([
-    { id: 1, title: 'New Government Subsidy Scheme', category: 'Policy', date: '2024-03-30', status: 'published', views: 1245 },
-    { id: 2, title: 'AI Disease Detection Launch', category: 'Technology', date: '2024-03-29', status: 'published', views: 892 },
-  ])
-
-  const [workshops, setWorkshops] = useState([
-    { id: 1, title: 'Organic Farming Techniques', date: '2024-04-15', venue: 'Online', capacity: 100, enrolled: 45, status: 'upcoming' },
-    { id: 2, title: 'Smart Irrigation Workshop', date: '2024-04-20', venue: 'Community Center', capacity: 50, enrolled: 32, status: 'upcoming' },
-  ])
-
-  const [analytics, setAnalytics] = useState({
-    totalUsers: 1234,
-    activeSensors: 56,
-    totalFarms: 890,
-    cropsPlanted: 2345,
+  const analytics = {
+    totalUsers: users.length,
+    activeSensors: sensors.filter(s => s.status === 'active').length,
+    totalFarms: users.filter(u => u.role === 'farmer').length,
+    cropsPlanted: crops.length,
     waterSaved: '1.2M L',
     yieldIncrease: '23%',
     revenue: '$45.2K',
     systemUptime: '99.9%'
-  })
+  }
+
+  const pendingExpertRequests = expertRequests.filter(r => r.status === 'pending')
 
   const stats = [
     { label: 'Total Users', value: analytics.totalUsers, icon: Users, change: '+12%', color: 'text-blue-600' },
     { label: 'Active Sensors', value: analytics.activeSensors, icon: Activity, change: '+5%', color: 'text-green-600' },
-    { label: 'Total Farms', value: analytics.totalFarms, icon: Map, change: '+8%', color: 'text-purple-600' },
-    { label: 'Crops Planted', value: analytics.cropsPlanted, icon: Sprout, change: '+15%', color: 'text-orange-600' },
+    { label: 'Total Farmers', value: analytics.totalFarms, icon: Map, change: '+8%', color: 'text-purple-600' },
+    { label: 'Crops Tracked', value: analytics.cropsPlanted, icon: Sprout, change: '+15%', color: 'text-orange-600' },
     { label: 'Water Saved', value: analytics.waterSaved, icon: Droplet, change: '+23%', color: 'text-cyan-600' },
     { label: 'Yield Increase', value: analytics.yieldIncrease, icon: TrendingUp, change: '+5%', color: 'text-emerald-600' },
     { label: 'Revenue', value: analytics.revenue, icon: Database, change: '+18%', color: 'text-yellow-600' },
@@ -74,6 +74,7 @@ export default function AdminPanel() {
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'users', label: 'User Management', icon: Users },
+    { id: 'expertRequests', label: 'Expert Requests', icon: GraduationCap, badge: pendingExpertRequests.length },
     { id: 'sensors', label: 'Sensor Management', icon: Wifi },
     { id: 'crops', label: 'Crop Database', icon: Sprout },
     { id: 'news', label: 'News Management', icon: Newspaper },
@@ -82,106 +83,105 @@ export default function AdminPanel() {
     { id: 'settings', label: 'System Settings', icon: Settings },
   ]
 
-  // Form state for CRUD
+  // ---------------- Generic CRUD (users / sensors / crops / news / workshops) ----------------
+
   const [formData, setFormData] = useState({})
 
-  const handleAdd = (type) => {
+  const handleAdd = () => {
     setModalType('add')
     setFormData({})
     setSelectedItem(null)
     setShowModal(true)
   }
 
-  const handleEdit = (item, type) => {
+  const handleEdit = (item) => {
     setModalType('edit')
     setSelectedItem(item)
     setFormData(item)
     setShowModal(true)
   }
 
-  const handleDelete = async (id, type) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      setLoading(true)
-      try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        switch(type) {
-          case 'users':
-            setUsers(users.filter(u => u.id !== id))
-            break
-          case 'sensors':
-            setSensors(sensors.filter(s => s.id !== id))
-            break
-          case 'crops':
-            setCrops(crops.filter(c => c.id !== id))
-            break
-          case 'news':
-            setNews(news.filter(n => n.id !== id))
-            break
-          case 'workshops':
-            setWorkshops(workshops.filter(w => w.id !== id))
-            break
-        }
-        toast.success('Item deleted successfully')
-      } catch (error) {
-        toast.error('Failed to delete item')
-      } finally {
-        setLoading(false)
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this item?')) return
+    setLoading(true)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      switch (activeTab) {
+        case 'users':
+          adminDeleteUser(id)
+          break
+        case 'sensors':
+          setSensors(prev => prev.filter(s => s.id !== id))
+          break
+        case 'crops':
+          setCrops(prev => prev.filter(c => c.id !== id))
+          break
+        case 'news':
+          deleteNews(id)
+          break
+        case 'workshops':
+          deleteWorkshop(id)
+          break
       }
+      toast.success('Item deleted successfully')
+    } catch (error) {
+      toast.error('Failed to delete item')
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
+      await new Promise(resolve => setTimeout(resolve, 300))
+
       if (modalType === 'add') {
-        const newId = Math.max(...getCurrentData().map(item => item.id), 0) + 1
-        const newItem = { ...formData, id: newId }
-        
-        switch(activeTab) {
+        switch (activeTab) {
           case 'users':
-            setUsers([...users, newItem])
+            adminAddUser(formData)
             break
-          case 'sensors':
-            setSensors([...sensors, newItem])
+          case 'sensors': {
+            const newId = Math.max(0, ...sensors.map(s => s.id)) + 1
+            setSensors(prev => [...prev, { ...formData, id: newId }])
             break
-          case 'crops':
-            setCrops([...crops, newItem])
+          }
+          case 'crops': {
+            const newId = Math.max(0, ...crops.map(c => c.id)) + 1
+            setCrops(prev => [...prev, { ...formData, id: newId }])
             break
+          }
           case 'news':
-            setNews([...news, newItem])
+            addNews({ ...formData, date: new Date().toISOString().split('T')[0], image: formData.image || '📰' })
             break
           case 'workshops':
-            setWorkshops([...workshops, newItem])
+            addWorkshop({ ...formData, capacity: Number(formData.capacity) || 0, instructor: formData.instructor || 'Admin' })
             break
         }
         toast.success('Item added successfully')
       } else {
-        switch(activeTab) {
+        switch (activeTab) {
           case 'users':
-            setUsers(users.map(u => u.id === selectedItem.id ? { ...formData, id: selectedItem.id } : u))
+            adminUpdateUser(selectedItem.id, formData)
             break
           case 'sensors':
-            setSensors(sensors.map(s => s.id === selectedItem.id ? { ...formData, id: selectedItem.id } : s))
+            setSensors(prev => prev.map(s => s.id === selectedItem.id ? { ...formData, id: selectedItem.id } : s))
             break
           case 'crops':
-            setCrops(crops.map(c => c.id === selectedItem.id ? { ...formData, id: selectedItem.id } : c))
+            setCrops(prev => prev.map(c => c.id === selectedItem.id ? { ...formData, id: selectedItem.id } : c))
             break
           case 'news':
-            setNews(news.map(n => n.id === selectedItem.id ? { ...formData, id: selectedItem.id } : n))
+            updateNews(selectedItem.id, formData)
             break
           case 'workshops':
-            setWorkshops(workshops.map(w => w.id === selectedItem.id ? { ...formData, id: selectedItem.id } : w))
+            updateWorkshop(selectedItem.id, { ...formData, capacity: Number(formData.capacity) || 0 })
             break
         }
         toast.success('Item updated successfully')
       }
-      
+
       setShowModal(false)
     } catch (error) {
       toast.error('Operation failed')
@@ -191,7 +191,7 @@ export default function AdminPanel() {
   }
 
   const getCurrentData = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case 'users': return users
       case 'sensors': return sensors
       case 'crops': return crops
@@ -202,7 +202,7 @@ export default function AdminPanel() {
   }
 
   const getFormFields = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case 'users':
         return [
           { name: 'name', label: 'Full Name', type: 'text', required: true },
@@ -227,15 +227,20 @@ export default function AdminPanel() {
       case 'news':
         return [
           { name: 'title', label: 'Title', type: 'text', required: true },
-          { name: 'category', label: 'Category', type: 'select', options: ['Policy', 'Technology', 'Market', 'Events'], required: true },
-          { name: 'status', label: 'Status', type: 'select', options: ['published', 'draft'], required: true },
+          { name: 'category', label: 'Category', type: 'select', options: ['Policy', 'Technology', 'Market', 'Events', 'Research'], required: true },
+          { name: 'summary', label: 'Summary', type: 'text', required: true },
+          { name: 'content', label: 'Full Content', type: 'textarea', required: true },
+          { name: 'author', label: 'Author', type: 'text', required: true },
+          { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published'], required: true },
         ]
       case 'workshops':
         return [
           { name: 'title', label: 'Workshop Title', type: 'text', required: true },
+          { name: 'instructor', label: 'Instructor', type: 'text', required: true },
           { name: 'date', label: 'Date', type: 'date', required: true },
           { name: 'venue', label: 'Venue', type: 'text', required: true },
           { name: 'capacity', label: 'Capacity', type: 'number', required: true },
+          { name: 'status', label: 'Status', type: 'select', options: ['upcoming', 'ongoing', 'completed'], required: true },
         ]
       default: return []
     }
@@ -243,8 +248,8 @@ export default function AdminPanel() {
 
   const renderTable = () => {
     const data = getCurrentData()
-    const filteredData = data.filter(item => 
-      Object.values(item).some(val => 
+    const filteredData = data.filter(item =>
+      Object.values(item).some(val =>
         val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
       )
     )
@@ -255,7 +260,7 @@ export default function AdminPanel() {
         <div className="text-center py-12">
           <Database className="w-16 h-16 mx-auto text-gray-400 mb-4" />
           <p className="text-gray-500">No data available</p>
-          <Button variant="primary" className="mt-4" onClick={() => handleAdd(activeTab)}>
+          <Button variant="primary" className="mt-4" onClick={handleAdd}>
             <Plus className="w-4 h-4 mr-2" />
             Add New
           </Button>
@@ -263,12 +268,22 @@ export default function AdminPanel() {
       )
     }
 
+    // Columns to actually render per tab (avoid dumping every raw field, e.g. passwords)
+    const columnsByTab = {
+      users: ['name', 'email', 'role', 'expertRequestStatus'],
+      sensors: ['name', 'type', 'location', 'status', 'battery'],
+      crops: ['name', 'season', 'duration', 'waterReq'],
+      news: ['title', 'category', 'status', 'date', 'views'],
+      workshops: ['title', 'instructor', 'date', 'status', 'enrolled', 'capacity'],
+    }
+    const columns = columnsByTab[activeTab] || Object.keys(paginatedData[0] || {}).filter(key => key !== 'id')
+
     return (
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b">
             <tr>
-              {Object.keys(paginatedData[0] || {}).filter(key => key !== 'id').map(key => (
+              {columns.map(key => (
                 <th key={key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {key.replace(/([A-Z])/g, ' $1').trim()}
                 </th>
@@ -279,20 +294,47 @@ export default function AdminPanel() {
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedData.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                {Object.entries(item).filter(([key]) => key !== 'id').map(([key, value]) => (
-                  <td key={key} className="px-6 py-4 text-sm text-gray-900">
-                    {Array.isArray(value) ? value.join(', ') : value}
-                  </td>
-                ))}
-                <td className="px-6 py-4 text-right text-sm font-medium">
+                {columns.map((key) => {
+                  const value = item[key]
+                  return (
+                    <td key={key} className="px-6 py-4 text-sm text-gray-900">
+                      {activeTab === 'news' && key === 'status' ? (
+                        <span className={`badge ${value === 'published' ? 'badge-success' : 'badge-warning'} text-xs capitalize`}>{value}</span>
+                      ) : activeTab === 'users' && key === 'role' ? (
+                        <span className={`badge ${value === 'admin' ? 'badge-danger' : value === 'expert' ? 'badge-info' : 'badge-success'} text-xs capitalize`}>{value}</span>
+                      ) : activeTab === 'users' && key === 'expertRequestStatus' ? (
+                        value ? <span className={`badge ${value === 'pending' ? 'badge-warning' : value === 'approved' ? 'badge-success' : 'badge-danger'} text-xs capitalize`}>{value}</span> : <span className="text-gray-400">—</span>
+                      ) : Array.isArray(value) ? value.join(', ') : (value ?? <span className="text-gray-400">—</span>)}
+                    </td>
+                  )
+                })}
+                <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
+                  {activeTab === 'users' && (
+                    <button
+                      onClick={() => navigate(`/admin/users/${item.id}`)}
+                      className="text-gray-500 hover:text-gray-900 mr-3"
+                      title="View complete profile"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  )}
+                  {activeTab === 'news' && (
+                    <button
+                      onClick={() => { togglePublishNews(item.id); toast.success(item.status === 'published' ? 'Unpublished' : 'Published') }}
+                      className="text-gray-500 hover:text-gray-900 mr-3"
+                      title={item.status === 'published' ? 'Unpublish' : 'Publish'}
+                    >
+                      {item.status === 'published' ? <UserX className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                    </button>
+                  )}
                   <button
-                    onClick={() => handleEdit(item, activeTab)}
+                    onClick={() => handleEdit(item)}
                     className="text-blue-600 hover:text-blue-900 mr-3"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(item.id, activeTab)}
+                    onClick={() => handleDelete(item.id)}
                     className="text-red-600 hover:text-red-900"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -302,8 +344,7 @@ export default function AdminPanel() {
             ))}
           </tbody>
         </table>
-        
-        {/* Pagination */}
+
         {filteredData.length > itemsPerPage && (
           <div className="flex justify-between items-center mt-4 px-4 py-3">
             <div className="text-sm text-gray-700">
@@ -370,6 +411,19 @@ export default function AdminPanel() {
               </div>
             </Card>
           ))}
+          {pendingExpertRequests.length > 0 && (
+            <Card className="lg:col-span-4 border border-yellow-200 bg-yellow-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <GraduationCap className="w-6 h-6 text-yellow-700" />
+                  <p className="text-sm text-yellow-800">
+                    <strong>{pendingExpertRequests.length}</strong> expert application{pendingExpertRequests.length > 1 ? 's' : ''} awaiting your review.
+                  </p>
+                </div>
+                <Button variant="secondary" size="sm" onClick={() => setActiveTab('expertRequests')}>Review Now</Button>
+              </div>
+            </Card>
+          )}
         </div>
       )}
 
@@ -392,13 +446,78 @@ export default function AdminPanel() {
             >
               <item.icon className="w-4 h-4" />
               {item.label}
+              {!!item.badge && (
+                <span className="bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>
       </div>
 
-      {/* Management Content */}
-      {activeTab !== 'overview' && activeTab !== 'analytics' && activeTab !== 'settings' && (
+      {/* Expert Requests Tab */}
+      {activeTab === 'expertRequests' && (
+        <Card className="overflow-hidden" noPadding>
+          {expertRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <GraduationCap className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500">No expert applications yet</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applicant</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specialization</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Experience</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {expertRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm">
+                        <p className="font-medium text-gray-900">{req.name}</p>
+                        <p className="text-gray-500 text-xs">{req.email}</p>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{req.specialization}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{req.experience}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{req.requestDate}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <span className={`badge ${req.status === 'pending' ? 'badge-warning' : req.status === 'approved' ? 'badge-success' : 'badge-danger'} text-xs capitalize flex items-center gap-1 w-fit`}>
+                          {req.status === 'pending' && <Clock className="w-3 h-3" />}
+                          {req.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {req.status === 'pending' ? (
+                          <div className="flex justify-end gap-2">
+                            <Button variant="primary" size="sm" onClick={() => approveExpertRequest(req.id)}>
+                              <UserCheck className="w-4 h-4 mr-1" /> Approve
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={() => rejectExpertRequest(req.id)}>
+                              <UserX className="w-4 h-4 mr-1" /> Reject
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm">No action needed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Management Content (users / sensors / crops / news / workshops) */}
+      {['users', 'sensors', 'crops', 'news', 'workshops'].includes(activeTab) && (
         <div>
           {/* Search and Actions Bar */}
           <div className="flex flex-wrap gap-4 mb-6">
@@ -412,7 +531,7 @@ export default function AdminPanel() {
                 className="input-field pl-10"
               />
             </div>
-            <Button variant="primary" onClick={() => handleAdd(activeTab)}>
+            <Button variant="primary" onClick={handleAdd}>
               <Plus className="w-4 h-4 mr-2" />
               Add New
             </Button>
@@ -427,7 +546,7 @@ export default function AdminPanel() {
           </div>
 
           {/* Data Table */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden" noPadding>
             {renderTable()}
           </Card>
         </div>
@@ -518,7 +637,7 @@ export default function AdminPanel() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 {getFormFields().map(field => (
                   <div key={field.name}>
@@ -537,6 +656,14 @@ export default function AdminPanel() {
                           <option key={opt} value={opt}>{opt}</option>
                         ))}
                       </select>
+                    ) : field.type === 'textarea' ? (
+                      <textarea
+                        value={formData[field.name] || ''}
+                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                        className="input-field"
+                        rows={4}
+                        required={field.required}
+                      />
                     ) : (
                       <input
                         type={field.type}
@@ -548,7 +675,7 @@ export default function AdminPanel() {
                     )}
                   </div>
                 ))}
-                
+
                 <div className="flex gap-3 pt-4">
                   <Button type="submit" variant="primary" className="flex-1" loading={loading}>
                     {modalType === 'add' ? 'Create' : 'Update'}

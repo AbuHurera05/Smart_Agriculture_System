@@ -7,6 +7,13 @@ import { AuthProvider } from './context/AuthContext'
 import App from './App'
 import './index.css'
 
+// Apply persisted/system dark-mode preference before first paint
+const savedDarkMode = localStorage.getItem('darkMode')
+const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
+if (savedDarkMode === 'true' || (savedDarkMode === null && prefersDark)) {
+  document.documentElement.classList.add('dark')
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

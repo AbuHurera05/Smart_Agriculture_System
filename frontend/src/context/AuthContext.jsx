@@ -1,13 +1,16 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import { authAPI, userAPI } from '../services/api'
 
 const AuthContext = createContext()
 
 export const useAuthContext = () => {
   const context = useContext(AuthContext)
+
   if (!context) {
     throw new Error('useAuthContext must be used within AuthProvider')
   }
+
   return context
 }
 
@@ -15,150 +18,803 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'Admin User',
-      email: 'admin@smartagri.com',
-      password: 'admin123',
-      role: 'admin',
-      avatar: '👨‍💼',
-      phone: '+91 9876543210',
-      joinDate: '2024-01-01',
-      farmSize: 'N/A',
-      location: 'Headquarters'
-    },
-    {
-      id: 2,
-      name: 'John Farmer',
-      email: 'farmer@smartagri.com',
-      password: 'farmer123',
-      role: 'farmer',
-      avatar: '👨‍🌾',
-      phone: '+91 9876543211',
-      joinDate: '2024-01-15',
-      farmSize: '15 acres',
-      location: 'Punjab, India',
-      crops: ['Rice', 'Wheat']
-    },
-    {
-      id: 3,
-      name: 'Dr. Sarah Wilson',
-      email: 'expert@smartagri.com',
-      password: 'expert123',
-      role: 'expert',
-      avatar: '👩‍🔬',
-      phone: '+91 9876543212',
-      joinDate: '2024-01-20',
-      specialization: 'Crop Disease',
-      experience: '8 years',
-      location: 'Agricultural University'
-    }
-  ])
+
+  /*
+   * These users are kept only for frontend/admin UI compatibility.
+   * Authentication itself is now handled by the Spring Boot backend.
+   */
+  const [users, setUsers] = useState([])
+
+  /*
+   * Expert applications are currently kept in frontend state.
+   * These can later be connected to the backend expert APIs.
+   */
+  const [expertRequests, setExpertRequests] = useState([])
+
+  // =========================================================
+  // INITIAL SESSION CHECK
+  // =========================================================
 
   useEffect(() => {
-    // Check localStorage for saved session
-    const savedUser = localStorage.getItem('user')
-    if (savedUser) {
-      const userData = JSON.parse(savedUser)
-      setUser(userData)
-      setIsAuthenticated(true)
+    const restoreSession = async () => {
+      const token = localStorage.getItem('token')
+      const savedUser = localStorage.getItem('user')
+
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        /*
+         * Verify the token with the backend instead of trusting
+         * only the localStorage user object.
+         */
+        const response = await authAPI.getProfile()
+
+        const userData = response.data?.data
+
+        if (userData) {
+          setUser(userData)
+          setIsAuthenticated(true)
+
+          localStorage.setItem('user', JSON.stringify(userData))
+        } else if (savedUser) {
+          /*
+           * Fallback in case the backend response does not contain
+           * the expected user data.
+           */
+          const userData = JSON.parse(savedUser)
+
+          setUser(userData)
+          setIsAuthenticated(true)
+        }
+      } catch (error) {
+        console.error('Session restore failed:', error)
+
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+
+        setUser(null)
+        setIsAuthenticated(false)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+
+    restoreSession()
   }, [])
+
+  // =========================================================
+  // LOGIN
+  // =========================================================
 
   const login = async (email, password) => {
     setLoading(true)
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const foundUser = users.find(u => u.email === email && u.password === password)
-      
-      if (foundUser) {
-        const { password, ...userWithoutPassword } = foundUser
-        setUser(userWithoutPassword)
-        setIsAuthenticated(true)
-        localStorage.setItem('user', JSON.stringify(userWithoutPassword))
-        toast.success(`Welcome back, ${foundUser.name}!`)
-        return { success: true, user: userWithoutPassword }
-      } else {
-        toast.error('Invalid email or password')
-        return { success: false, error: 'Invalid credentials' }
+      const response = await authAPI.login({
+        email,
+        password,
+      })
+
+      const authData = response.data?.data
+
+      if (!authData) {
+        throw new Error('Invalid login response from server')
+      }
+
+      const token = authData.token
+      const refreshToken = authData.refreshToken
+      const userData = authData.user
+
+      if (!token) {
+        throw new Error('Token was not returned by server')
+      }
+
+      // Axios interceptor isi key ko read karta hai
+      localStorage.setItem('token', token)
+
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken)
+      }
+
+      if (userData) {
+        localStorage.setItem('user', JSON.stringify(userData))
+        setUser(userData)
+      }
+
+      setIsAuthenticated(true)
+
+      toast.success(
+        `Welcome back${userData?.name ? `, ${userData.name}` : ''}!`
+      )
+
+      return {
+        success: true,
+        user: userData,
+        token,
+        refreshToken,
       }
     } catch (error) {
-      toast.error('Login failed. Please try again.')
-      return { success: false, error: error.message }
+      console.error('Login error:', error)
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Invalid email or password'
+
+      toast.error(message)
+
+      return {
+        success: false,
+        error: message,
+      }
     } finally {
       setLoading(false)
     }
   }
+
+  // =========================================================
+  // REGISTER
+  // =========================================================
 
   const register = async (userData) => {
     setLoading(true)
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const existingUser = users.find(u => u.email === userData.email)
-      if (existingUser) {
-        toast.error('Email already registered')
-        return { success: false, error: 'Email already exists' }
+      /*
+       * Send registration data to Spring Boot.
+       */
+      const response = await authAPI.register(userData)
+
+      const authData = response.data?.data
+
+      if (authData?.token) {
+        localStorage.setItem('token', authData.token)
       }
-      
-      const newUser = {
-        id: users.length + 1,
-        ...userData,
-        role: 'farmer',
-        joinDate: new Date().toISOString().split('T')[0],
-        avatar: '👨‍🌾'
+
+      if (authData?.refreshToken) {
+        localStorage.setItem('refreshToken', authData.refreshToken)
       }
-      
-      setUsers([...users, newUser])
-      toast.success('Registration successful! Please login.')
-      return { success: true }
+
+      if (authData?.user) {
+        localStorage.setItem(
+          'user',
+          JSON.stringify(authData.user)
+        )
+
+        setUser(authData.user)
+        setIsAuthenticated(true)
+      }
+
+      toast.success(
+        response.data?.message || 'Registration successful!'
+      )
+
+      return {
+        success: true,
+        user: authData?.user || null,
+      }
     } catch (error) {
-      toast.error('Registration failed')
-      return { success: false, error: error.message }
+      console.error('Registration error:', error)
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Registration failed'
+
+      toast.error(message)
+
+      return {
+        success: false,
+        error: message,
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
-    localStorage.removeItem('user')
-    toast.success('Logged out successfully')
+  // =========================================================
+  // LOGOUT
+  // =========================================================
+
+  const logout = async () => {
+    try {
+      /*
+       * Call backend logout endpoint.
+       *
+       * Even though JWT is stateless, this keeps frontend and
+       * backend behaviour consistent.
+       */
+      await authAPI.logout()
+    } catch (error) {
+      /*
+       * Logout should still happen locally even if the backend
+       * request fails.
+       */
+      console.warn('Backend logout failed:', error)
+    } finally {
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+
+      setUser(null)
+      setIsAuthenticated(false)
+
+      toast.success('Logged out successfully')
+    }
   }
+
+  // =========================================================
+  // BECOME SELLER
+  // =========================================================
+
+  const becomeSeller = async (sellerData) => {
+    setLoading(true)
+
+    try {
+      /*
+       * Seller API will be connected here once marketplaceAPI
+       * is imported.
+       *
+       * For now this preserves your existing frontend behaviour.
+       */
+      const updatedUser = {
+        ...user,
+        isSeller: true,
+        sellerProfile: {
+          shopName: sellerData.shopName,
+          description: sellerData.description,
+          location: sellerData.location || user?.location,
+          rating: 0,
+          totalSales: 0,
+          verified: false,
+          joinedAsSellerOn: new Date().toISOString().split('T')[0],
+        },
+      }
+
+      setUser(updatedUser)
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(updatedUser)
+      )
+
+      toast.success(
+        'You are now a registered seller! Start listing your products.'
+      )
+
+      return {
+        success: true,
+        user: updatedUser,
+      }
+    } catch (error) {
+      console.error('Seller registration error:', error)
+
+      toast.error('Could not complete seller registration')
+
+      return {
+        success: false,
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========================================================
+  // APPLY FOR EXPERT
+  // =========================================================
+
+  const applyForExpert = async (applicationData) => {
+    setLoading(true)
+
+    try {
+      if (!user) {
+        toast.error('You must be logged in to apply')
+        return { success: false }
+      }
+
+      const alreadyPending = expertRequests.some(
+        (request) =>
+          request.userId === user.id &&
+          request.status === 'pending'
+      )
+
+      if (alreadyPending) {
+        toast.error(
+          'You already have a pending expert application'
+        )
+
+        return {
+          success: false,
+        }
+      }
+
+      /*
+       * This currently keeps the expert application in frontend
+       * state. It can be connected to /experts/apply later.
+       */
+      const newRequest = {
+        id: expertRequests.length
+          ? Math.max(...expertRequests.map((r) => r.id)) + 1
+          : 1,
+
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+
+        specialization: applicationData.specialization,
+        experience: applicationData.experience,
+        motivation: applicationData.motivation,
+
+        status: 'pending',
+
+        requestDate: new Date()
+          .toISOString()
+          .split('T')[0],
+      }
+
+      setExpertRequests((prev) => [
+        ...prev,
+        newRequest,
+      ])
+
+      const updatedUser = {
+        ...user,
+        expertRequestStatus: 'pending',
+      }
+
+      setUser(updatedUser)
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(updatedUser)
+      )
+
+      setUsers((prev) =>
+        prev.map((existingUser) =>
+          existingUser.id === user.id
+            ? {
+              ...existingUser,
+              expertRequestStatus: 'pending',
+            }
+            : existingUser
+        )
+      )
+
+      toast.success(
+        'Application submitted! An admin will review your request.'
+      )
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      console.error('Expert application error:', error)
+
+      toast.error('Could not submit application')
+
+      return {
+        success: false,
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========================================================
+  // APPROVE EXPERT REQUEST
+  // =========================================================
+
+  const approveExpertRequest = (requestId) => {
+    const request = expertRequests.find(
+      (r) => r.id === requestId
+    )
+
+    if (!request) {
+      return
+    }
+
+    setExpertRequests((prev) =>
+      prev.map((r) =>
+        r.id === requestId
+          ? {
+            ...r,
+            status: 'approved',
+          }
+          : r
+      )
+    )
+
+    setUsers((prev) =>
+      prev.map((existingUser) =>
+        existingUser.id === request.userId
+          ? {
+            ...existingUser,
+            role: 'expert',
+            expertRequestStatus: 'approved',
+          }
+          : existingUser
+      )
+    )
+
+    if (user?.id === request.userId) {
+      const updatedUser = {
+        ...user,
+        role: 'expert',
+        expertRequestStatus: 'approved',
+      }
+
+      setUser(updatedUser)
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(updatedUser)
+      )
+    }
+
+    toast.success(
+      `${request.name} has been approved as an Expert`
+    )
+  }
+
+  // =========================================================
+  // REJECT EXPERT REQUEST
+  // =========================================================
+
+  const rejectExpertRequest = (requestId) => {
+    const request = expertRequests.find(
+      (r) => r.id === requestId
+    )
+
+    if (!request) {
+      return
+    }
+
+    setExpertRequests((prev) =>
+      prev.map((r) =>
+        r.id === requestId
+          ? {
+            ...r,
+            status: 'rejected',
+          }
+          : r
+      )
+    )
+
+    setUsers((prev) =>
+      prev.map((existingUser) =>
+        existingUser.id === request.userId
+          ? {
+            ...existingUser,
+            expertRequestStatus: 'rejected',
+          }
+          : existingUser
+      )
+    )
+
+    if (user?.id === request.userId) {
+      const updatedUser = {
+        ...user,
+        expertRequestStatus: 'rejected',
+      }
+
+      setUser(updatedUser)
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(updatedUser)
+      )
+    }
+
+    toast.success(
+      `${request.name}'s expert application was rejected`
+    )
+  }
+
+  // =========================================================
+  // ADMIN ADD USER
+  // =========================================================
+
+  const adminAddUser = (data) => {
+    const newId = users.length
+      ? Math.max(...users.map((u) => u.id)) + 1
+      : 1
+
+    const newUser = {
+      id: newId,
+
+      joinDate: new Date()
+        .toISOString()
+        .split('T')[0],
+
+      avatar:
+        data.role === 'admin'
+          ? '👨‍💼'
+          : data.role === 'expert'
+            ? '👩‍🔬'
+            : '👨‍🌾',
+
+      ...data,
+    }
+
+    setUsers((prev) => [
+      ...prev,
+      newUser,
+    ])
+
+    return newUser
+  }
+
+  // =========================================================
+  // ADMIN UPDATE USER
+  // =========================================================
+
+  const adminUpdateUser = (id, updates) => {
+    setUsers((prev) =>
+      prev.map((existingUser) =>
+        existingUser.id === id
+          ? {
+            ...existingUser,
+            ...updates,
+          }
+          : existingUser
+      )
+    )
+
+    if (user?.id === id) {
+      const updatedUser = {
+        ...user,
+        ...updates,
+      }
+
+      setUser(updatedUser)
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(updatedUser)
+      )
+    }
+  }
+
+  // =========================================================
+  // ADMIN DELETE USER
+  // =========================================================
+
+  const adminDeleteUser = (id) => {
+    setUsers((prev) =>
+      prev.filter((existingUser) => existingUser.id !== id)
+    )
+  }
+
+  // =========================================================
+  // UPDATE CURRENT USER
+  // =========================================================
 
   const updateUser = async (updatedData) => {
     setLoading(true)
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const updatedUser = { ...user, ...updatedData }
+      const response = await userAPI.updateProfile(updatedData)
+
+      const updatedUser = response.data?.data
+
+      if (!updatedUser) {
+        throw new Error('Invalid profile response from server')
+      }
+
       setUser(updatedUser)
-      localStorage.setItem('user', JSON.stringify(updatedUser))
-      toast.success('Profile updated successfully')
-      return { success: true }
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(updatedUser)
+      )
+
+      toast.success(
+        response.data?.message || 'Profile updated successfully'
+      )
+
+      return {
+        success: true,
+        user: updatedUser,
+      }
     } catch (error) {
-      toast.error('Update failed')
-      return { success: false }
+      console.error('Profile update error:', error)
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Profile update failed'
+
+      toast.error(message)
+
+      return {
+        success: false,
+        error: message,
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  // =========================================================
+  // UPDATE CURRENT USER PASSWORD
+  // =========================================================
+
+  const changePassword = async (passwordData) => {
+    setLoading(true)
+
+    try {
+      const response = await userAPI.changePassword(passwordData)
+
+      toast.success(
+        response.data?.message || 'Password changed successfully'
+      )
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      console.error('Change password error:', error)
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Password change failed'
+
+      toast.error(message)
+
+      return {
+        success: false,
+        error: message,
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========================================================
+  // UPDATE CURRENT USER AVATAR
+  // =========================================================
+  const uploadAvatar = async (file) => {
+    setLoading(true)
+
+    try {
+      const formData = new FormData()
+
+      formData.append('avatar', file)
+
+      const response = await userAPI.uploadAvatar(formData)
+
+      const updatedUser = response.data?.data
+
+      if (updatedUser) {
+        setUser(updatedUser)
+
+        localStorage.setItem(
+          'user',
+          JSON.stringify(updatedUser)
+        )
+      }
+
+      toast.success(
+        response.data?.message || 'Avatar updated successfully'
+      )
+
+      return {
+        success: true,
+        user: updatedUser,
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error)
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Avatar upload failed'
+
+      toast.error(message)
+
+      return {
+        success: false,
+        error: message,
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========================================================
+  // UPDATE CURRENT USER SETTING
+  // =========================================================
+
+  const updateSettings = async (settingsData) => {
+    setLoading(true)
+
+    try {
+      const response = await userAPI.updateSettings(settingsData)
+
+      toast.success(
+        response.data?.message || 'Settings updated successfully'
+      )
+
+      return {
+        success: true,
+        settings: response.data?.data,
+      }
+    } catch (error) {
+      console.error('Settings update error:', error)
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Settings update failed'
+
+      toast.error(message)
+
+      return {
+        success: false,
+        error: message,
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========================================================
+  // CONTEXT VALUE
+  // =========================================================
+
   const value = {
     user,
+    users,
+
     isAuthenticated,
     loading,
+
     login,
     register,
     logout,
+
     updateUser,
-    isAdmin: user?.role === 'admin',
-    isFarmer: user?.role === 'farmer',
-    isExpert: user?.role === 'expert'
+    changePassword,
+    uploadAvatar,
+    updateSettings,
+    becomeSeller,
+
+    applyForExpert,
+    approveExpertRequest,
+    rejectExpertRequest,
+
+    expertRequests,
+
+    adminAddUser,
+    adminUpdateUser,
+    adminDeleteUser,
+
+    isSeller: !!user?.isSeller,
+
+    isAdmin:
+      user?.role === 'admin' ||
+      user?.role === 'ADMIN',
+
+    isFarmer:
+      user?.role === 'farmer' ||
+      user?.role === 'FARMER',
+
+    isExpert:
+      user?.role === 'expert' ||
+      user?.role === 'EXPERT',
+
+    expertRequestStatus:
+      user?.expertRequestStatus || null,
   }
 
   return (
