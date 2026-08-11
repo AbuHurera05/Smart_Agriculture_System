@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import toast from 'react-hot-toast'
-import { authAPI, userAPI } from '../services/api'
+import { authAPI, userAPI, adminAPI } from '../services/api'
 
 const AuthContext = createContext()
 
@@ -519,58 +519,74 @@ export const AuthProvider = ({ children }) => {
   // ADMIN ADD USER
   // =========================================================
 
-  const adminAddUser = (data) => {
-    const newId = users.length
-      ? Math.max(...users.map((u) => u.id)) + 1
-      : 1
+const adminAddUser = async (data) => {
+  setLoading(true)
 
-    const newUser = {
-      id: newId,
+  try {
+    const response = await adminAPI.createUser(data)
 
-      joinDate: new Date()
-        .toISOString()
-        .split('T')[0],
+    const newUser = response.data?.data
 
-      avatar:
-        data.role === 'admin'
-          ? '👨‍💼'
-          : data.role === 'expert'
-            ? '👩‍🔬'
-            : '👨‍🌾',
-
-      ...data,
+    if (!newUser) {
+      throw new Error('Invalid response from server')
     }
 
-    setUsers((prev) => [
-      ...prev,
-      newUser,
-    ])
+    setUsers((prev) => [...prev, newUser])
 
-    return newUser
+    toast.success(
+      response.data?.message || 'User created successfully'
+    )
+
+    return {
+      success: true,
+      user: newUser,
+    }
+  } catch (error) {
+    console.error('Admin create user error:', error)
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Could not create user'
+
+    toast.error(message)
+
+    return {
+      success: false,
+      error: message,
+    }
+  } finally {
+    setLoading(false)
   }
+}
 
   // =========================================================
   // ADMIN UPDATE USER
   // =========================================================
 
-  const adminUpdateUser = (id, updates) => {
+const adminUpdateUser = async (id, updates) => {
+  setLoading(true)
+
+  try {
+    const response = await adminAPI.updateUser(id, updates)
+
+    const updatedUser = response.data?.data
+
+    if (!updatedUser) {
+      throw new Error('Invalid response from server')
+    }
+
     setUsers((prev) =>
       prev.map((existingUser) =>
         existingUser.id === id
-          ? {
-            ...existingUser,
-            ...updates,
-          }
+          ? updatedUser
           : existingUser
       )
     )
 
+    // Agar admin apna hi account update kar raha hai
     if (user?.id === id) {
-      const updatedUser = {
-        ...user,
-        ...updates,
-      }
-
       setUser(updatedUser)
 
       localStorage.setItem(
@@ -578,17 +594,75 @@ export const AuthProvider = ({ children }) => {
         JSON.stringify(updatedUser)
       )
     }
+
+    toast.success(
+      response.data?.message || 'User updated successfully'
+    )
+
+    return {
+      success: true,
+      user: updatedUser,
+    }
+  } catch (error) {
+    console.error('Admin update user error:', error)
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Could not update user'
+
+    toast.error(message)
+
+    return {
+      success: false,
+      error: message,
+    }
+  } finally {
+    setLoading(false)
   }
+}
 
   // =========================================================
   // ADMIN DELETE USER
   // =========================================================
 
-  const adminDeleteUser = (id) => {
+const adminDeleteUser = async (id) => {
+  setLoading(true)
+
+  try {
+    const response = await adminAPI.deleteUser(id)
+
     setUsers((prev) =>
       prev.filter((existingUser) => existingUser.id !== id)
     )
+
+    toast.success(
+      response.data?.message || 'User deleted successfully'
+    )
+
+    return {
+      success: true,
+    }
+  } catch (error) {
+    console.error('Admin delete user error:', error)
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Could not delete user'
+
+    toast.error(message)
+
+    return {
+      success: false,
+      error: message,
+    }
+  } finally {
+    setLoading(false)
   }
+}
 
   // =========================================================
   // UPDATE CURRENT USER
