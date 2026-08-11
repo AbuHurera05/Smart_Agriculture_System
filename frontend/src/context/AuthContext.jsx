@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
   const [users, setUsers] = useState([])
 
   /*
-   * Expert applications are currently kept in frontend hstate.
+   * Expert applications are currently kept in frontend state.
    * These can later be connected to the backend expert APIs.
    */
   const [expertRequests, setExpertRequests] = useState([])
