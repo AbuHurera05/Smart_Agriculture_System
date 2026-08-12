@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, BadgeCheck,
@@ -9,7 +9,8 @@ import Button from '../components/common/Button'
 import { useAuthContext } from '../context/AuthContext'
 import { generateUserFarmData } from '../utils/mockUserData'
 
-const roleBadge = {
+// Backend's UserResponse.userType is the business role: ADMIN / FARMER / EXPERT.
+const userTypeBadge = {
   admin: 'badge-danger',
   expert: 'badge-info',
   farmer: 'badge-success',
@@ -18,9 +19,19 @@ const roleBadge = {
 export default function AdminUserDetail() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const { users } = useAuthContext()
+  const { users, fetchUsers } = useAuthContext()
+
+  // This page can be opened directly via URL (not just navigated to from
+  // AdminPanel), so make sure `users` is actually loaded rather than
+  // assuming AdminPanel's fetch already ran.
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const targetUser = users.find((u) => String(u.id) === String(userId))
+
+  // No backend endpoint yet returns a farmer's fields/sensors/crops/activity
+  // feed, so this stays mocked until one exists.
   const farmData = useMemo(() => generateUserFarmData(userId), [userId])
 
   if (!targetUser) {
@@ -35,6 +46,8 @@ export default function AdminUserDetail() {
       </div>
     )
   }
+
+  const userType = (targetUser.userType || '').toLowerCase()
 
   return (
     <div className="space-y-6">
@@ -61,11 +74,13 @@ export default function AdminUserDetail() {
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <span className={`badge ${roleBadge[targetUser.role] || 'badge-info'} inline-flex items-center gap-1 capitalize`}>
-              <BadgeCheck size={12} /> {targetUser.role}
+            <span className={`badge ${userTypeBadge[userType] || 'badge-info'} inline-flex items-center gap-1 capitalize`}>
+              <BadgeCheck size={12} /> {targetUser.userType || 'Unknown'}
             </span>
+            <span className="text-xs text-gray-400">Security role: {targetUser.role || '—'}</span>
             <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Calendar className="w-3 h-3" /> Joined {targetUser.joinDate || '—'}
+              <Calendar className="w-3 h-3" />
+              Joined {targetUser.joinDate ? new Date(targetUser.joinDate).toLocaleDateString() : '—'}
             </span>
           </div>
         </div>
