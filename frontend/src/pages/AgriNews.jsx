@@ -1,28 +1,52 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, User, ChevronRight, X } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
-import useDataStore from '../store/useDataStore'
+import { newsAPI } from '../services/api'
+import { useAuthContext } from '../context/AuthContext'
 
 export default function AgriNews() {
-  const { news } = useDataStore()
+  const { user } = useAuthContext()
+
+  const [news, setNews] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [openArticle, setOpenArticle] = useState(null)
 
   const categories = ['All', 'Technology', 'Market', 'Policy', 'Research', 'Events']
 
-  // Farmers and Experts only ever see published news.
+  useEffect(() => {
+    const loadNews = async () => {
+      try {
+        const response = await newsAPI.getNews()
+        setNews(response.data?.data || [])
+      } catch (err) {
+        console.error('Failed to load news:', err)
+        setError(err.response?.data?.message || 'Could not load news right now')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadNews()
+  }, [])
+
+  // GET /news already only returns published articles, but filtering here
+  // too is a cheap safety net in case that ever changes.
   const publishedNews = news.filter((n) => n.status === 'published')
 
   const filteredNews = selectedCategory === 'all'
     ? publishedNews
-    : publishedNews.filter(n => n.category.toLowerCase() === selectedCategory.toLowerCase())
+    : publishedNews.filter(n => n.category?.toLowerCase() === selectedCategory.toLowerCase())
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Agricultural News</h1>
-        <p className="text-gray-600 mt-1">Latest updates and insights from the agricultural world</p>
+        <p className="text-gray-600 mt-1">
+          {user?.name ? `Latest updates and insights for you, ${user.name}` : 'Latest updates and insights from the agricultural world'}
+        </p>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2">
@@ -41,7 +65,15 @@ export default function AgriNews() {
         ))}
       </div>
 
-      {filteredNews.length === 0 ? (
+      {loading ? (
+        <Card className="text-center py-12">
+          <p className="text-gray-500">Loading news...</p>
+        </Card>
+      ) : error ? (
+        <Card className="text-center py-12">
+          <p className="text-red-500">{error}</p>
+        </Card>
+      ) : filteredNews.length === 0 ? (
         <Card className="text-center py-12">
           <p className="text-gray-500">No published news in this category yet.</p>
         </Card>
@@ -50,7 +82,7 @@ export default function AgriNews() {
           {filteredNews.map((item) => (
             <Card key={item.id} hover className="cursor-pointer" onClick={() => setOpenArticle(item)}>
               <div className="flex gap-4">
-                <div className="text-4xl">{item.image}</div>
+                <div className="text-4xl">{item.image || '📰'}</div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="badge badge-info text-xs">{item.category}</span>
@@ -64,7 +96,7 @@ export default function AgriNews() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      <span>{item.date}</span>
+                      <span>{item.date ? new Date(item.date).toLocaleDateString() : '—'}</span>
                     </div>
                   </div>
                 </div>
@@ -85,11 +117,14 @@ export default function AgriNews() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="text-5xl mb-3">{openArticle.image}</div>
+              <div className="text-5xl mb-3">{openArticle.image || '📰'}</div>
               <h2 className="text-2xl font-bold mb-2">{openArticle.title}</h2>
               <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                 <span className="flex items-center gap-1"><User className="w-4 h-4" /> {openArticle.author}</span>
-                <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {openArticle.date}</span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {openArticle.date ? new Date(openArticle.date).toLocaleDateString() : '—'}
+                </span>
               </div>
               <p className="text-gray-700 leading-relaxed">{openArticle.content || openArticle.summary}</p>
               <Button variant="secondary" className="mt-6 w-full" onClick={() => setOpenArticle(null)}>
