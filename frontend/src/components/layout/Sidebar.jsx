@@ -6,7 +6,6 @@ import {
   Gauge,
   Sprout,
   CloudRain,
-  Newspaper,
   Smartphone,
   Users,
   Map,
@@ -53,7 +52,6 @@ const menuGroups = [
       { path: '/farmer-network', icon: Users, label: 'Farmer Network' },
       { path: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
       { path: '/training', icon: GraduationCap, label: 'Training Workshops' },
-      { path: '/news', icon: Newspaper, label: 'Agri News' },
     ],
   },
   {
@@ -88,7 +86,7 @@ export default function Sidebar() {
             <Leaf size={20} />
           </div>
           <h1 className={`font-bold text-lg tracking-tight whitespace-nowrap ${collapsed ? 'lg:hidden' : ''}`}>
-            Smart Agri
+            AgroBazaar
           </h1>
         </div>
         <button
@@ -149,7 +147,7 @@ export default function Sidebar() {
 
       <div className="p-4 border-t border-white/10">
         <div className={`text-center ${collapsed ? 'lg:hidden' : ''}`}>
-          <p className="text-xs text-white/60">Smart Agriculture System</p>
+          <p className="text-xs text-white/60">Smart Agriculture &amp; Marketplace</p>
           <p className="text-[11px] text-white/40 mt-0.5">v2.0.0 &middot; IoT Platform</p>
         </div>
       </div>

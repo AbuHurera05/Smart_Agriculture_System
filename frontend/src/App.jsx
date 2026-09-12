@@ -3,13 +3,13 @@ import { useAuthContext } from './context/AuthContext'
 import Layout from './components/layout/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
+import OAuthCallback from './pages/OAuthCallback'
 import IoTDashboard from './pages/IoTDashboard'
 import AdminPanel from './pages/AdminPanel'
 import AdminUserDetail from './pages/AdminUserDetail'
 import ExpertDashboard from './pages/ExpertDashboard'
 import CropGuide from './pages/CropGuide'
 import LiveWeather from './pages/LiveWeather'
-import AgriNews from './pages/AgriNews'
 import MobileAppView from './pages/MobileAppView'
 import FarmerNetwork from './pages/FarmerNetwork'
 import LandManagement from './pages/LandManagement'
@@ -18,6 +18,13 @@ import IrrigationAdvice from './pages/IrrigationAdvice'
 import SoilTesting from './pages/SoilTesting'
 import TrainingWorkshops from './pages/TrainingWorkshops'
 import Marketplace from './pages/Marketplace'
+import ProductDetail from './pages/ProductDetail'
+import Cart from './pages/Cart'
+import Checkout from './pages/Checkout'
+import MyOrders from './pages/MyOrders'
+import Wishlist from './pages/Wishlist'
+import SellerDashboard from './pages/SellerDashboard'
+import SellerStore from './pages/SellerStore'
 import LiveMonitoring from './pages/LiveMonitoring'
 import SensorDetails from './pages/SensorDetails'
 import AIChatbot from './pages/AIChatbot'
@@ -36,6 +43,7 @@ function App() {
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/oauth2/redirect" element={<OAuthCallback />} />
       
       {/* Protected Routes - Only accessible when authenticated */}
       <Route
@@ -53,7 +61,6 @@ function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/crop-guide" element={<CropGuide />} />
                 <Route path="/weather" element={<LiveWeather />} />
-                <Route path="/news" element={<AgriNews />} />
                 <Route path="/mobile-view" element={<MobileAppView />} />
                 <Route path="/farmer-network" element={<FarmerNetwork />} />
                 <Route path="/land-management" element={<LandManagement />} />
@@ -61,7 +68,16 @@ function App() {
                 <Route path="/irrigation" element={<IrrigationAdvice />} />
                 <Route path="/soil-testing" element={<SoilTesting />} />
                 <Route path="/training" element={<TrainingWorkshops />} />
+
+                {/* Marketplace */}
                 <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/marketplace/product/:id" element={<ProductDetail />} />
+                <Route path="/marketplace/cart" element={<Cart />} />
+                <Route path="/marketplace/checkout" element={<Checkout />} />
+                <Route path="/marketplace/orders" element={<MyOrders />} />
+                <Route path="/marketplace/wishlist" element={<Wishlist />} />
+                <Route path="/marketplace/seller" element={<SellerDashboard />} />
+                <Route path="/marketplace/seller/:id" element={<SellerStore />} />
                 
                 {/* Expert Only Routes */}
                 <Route

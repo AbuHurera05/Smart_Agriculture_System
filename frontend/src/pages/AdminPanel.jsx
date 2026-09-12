@@ -12,6 +12,11 @@ import Button from '../components/common/Button'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '../context/AuthContext'
 import useDataStore from '../store/useDataStore'
+import { workshopAPI } from '../services/api'
+import { workshopFromResponse, workshopToRequest } from '../utils/workshopMapper'
+
+const getErrorMessage = (error, fallback) =>
+  error.response?.data?.message || error.response?.data?.error || error.message || fallback
 
 export default function AdminPanel() {
   const navigate = useNavigate()
@@ -20,9 +25,14 @@ export default function AdminPanel() {
     expertRequests, fetchExpertRequests, approveExpertRequest, rejectExpertRequest,
   } = useAuthContext()
   const {
-    news, addNews, updateNews, deleteNews, togglePublishNews,
-    workshops, addWorkshop, updateWorkshop, deleteWorkshop,
+    news, fetchNews, addNews, updateNews, deleteNews, togglePublishNews,
   } = useDataStore()
+
+  // Workshops are real expert-service records (GET/POST/PUT/DELETE
+  // /experts/workshops) - the ADMIN role is authorized for the same
+  // create/update/delete endpoints as EXPERT, so this tab talks to the
+  // same workshopAPI as ExpertDashboard.jsx / TrainingWorkshops.jsx.
+  const [workshops, setWorkshops] = useState([])
 
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(false)
@@ -33,13 +43,26 @@ export default function AdminPanel() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
+  const loadWorkshops = async () => {
+    try {
+      const response = await workshopAPI.getAll()
+      setWorkshops((response.data?.data || []).map(workshopFromResponse))
+    } catch (error) {
+      console.error('Failed to load workshops:', error)
+      toast.error(getErrorMessage(error, 'Could not load workshops'))
+    }
+  }
+
   // `users` and `expertRequests` live in AuthContext and are backed by the
   // real backend (GET /admin/users, GET /experts/requests) - load them once
-  // when the panel mounts.
+  // when the panel mounts. `workshops` and `news` are backed by their own
+  // services too (expert-service, news-service).
   useEffect(() => {
     fetchUsers()
     fetchExpertRequests()
-  }, [fetchUsers, fetchExpertRequests])
+    loadWorkshops()
+    fetchNews()
+  }, [fetchUsers, fetchExpertRequests, fetchNews])
 
   // Data States (sensors & crops are still frontend-only reference data -
   // the backend has no admin CRUD endpoints for them yet, only read-only
@@ -128,6 +151,14 @@ export default function AdminPanel() {
         return
       }
 
+      // Workshops are also real backend records (DELETE /experts/workshops/{id}).
+      if (activeTab === 'workshops') {
+        await workshopAPI.delete(id)
+        setWorkshops(prev => prev.filter(w => w.id !== id))
+        toast.success('Item deleted successfully')
+        return
+      }
+
       // Everything else here is still frontend-only mock/store data.
       await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -141,13 +172,10 @@ export default function AdminPanel() {
         case 'news':
           deleteNews(id)
           break
-        case 'workshops':
-          deleteWorkshop(id)
-          break
       }
       toast.success('Item deleted successfully')
     } catch (error) {
-      toast.error('Failed to delete item')
+      toast.error(activeTab === 'workshops' ? getErrorMessage(error, 'Failed to delete item') : 'Failed to delete item')
     } finally {
       setLoading(false)
     }
@@ -180,6 +208,23 @@ export default function AdminPanel() {
         return
       }
 
+      // Workshops are also real backend records (POST/PUT /experts/workshops).
+      if (activeTab === 'workshops') {
+        const payload = workshopToRequest(formData)
+
+        if (modalType === 'add') {
+          const response = await workshopAPI.create(payload)
+          setWorkshops(prev => [workshopFromResponse(response.data?.data), ...prev])
+        } else {
+          const response = await workshopAPI.update(selectedItem.id, payload)
+          setWorkshops(prev => prev.map(w => (w.id === selectedItem.id ? workshopFromResponse(response.data?.data) : w)))
+        }
+
+        toast.success(modalType === 'add' ? 'Item added successfully' : 'Item updated successfully')
+        setShowModal(false)
+        return
+      }
+
       // Everything else here is still frontend-only mock/store data.
       await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -198,9 +243,6 @@ export default function AdminPanel() {
           case 'news':
             addNews({ ...formData, date: new Date().toISOString().split('T')[0], image: formData.image || '📰' })
             break
-          case 'workshops':
-            addWorkshop({ ...formData, capacity: Number(formData.capacity) || 0, instructor: formData.instructor || 'Admin' })
-            break
         }
         toast.success('Item added successfully')
       } else {
@@ -214,16 +256,13 @@ export default function AdminPanel() {
           case 'news':
             updateNews(selectedItem.id, formData)
             break
-          case 'workshops':
-            updateWorkshop(selectedItem.id, { ...formData, capacity: Number(formData.capacity) || 0 })
-            break
         }
         toast.success('Item updated successfully')
       }
 
       setShowModal(false)
     } catch (error) {
-      toast.error('Operation failed')
+      toast.error(activeTab === 'workshops' ? getErrorMessage(error, 'Operation failed') : 'Operation failed')
     } finally {
       setLoading(false)
     }
@@ -310,11 +349,15 @@ export default function AdminPanel() {
       case 'workshops':
         return [
           { name: 'title', label: 'Workshop Title', type: 'text', required: true },
-          { name: 'instructor', label: 'Instructor', type: 'text', required: true },
           { name: 'date', label: 'Date', type: 'date', required: true },
+          { name: 'time', label: 'Time', type: 'time', required: true },
           { name: 'venue', label: 'Venue', type: 'text', required: true },
+          { name: 'type', label: 'Type', type: 'select', options: ['online', 'in-person', 'hybrid'], required: true },
           { name: 'capacity', label: 'Capacity', type: 'number', required: true },
-          { name: 'status', label: 'Status', type: 'select', options: ['upcoming', 'ongoing', 'completed'], required: true },
+          { name: 'price', label: 'Price (₹, 0 for free)', type: 'number', required: true },
+          { name: 'topics', label: 'Topics (comma separated)', type: 'text' },
+          { name: 'description', label: 'Description', type: 'textarea', required: true },
+          { name: 'status', label: 'Status', type: 'select', options: ['upcoming', 'ongoing', 'completed', 'cancelled'], required: modalType === 'edit' },
         ]
       default: return []
     }

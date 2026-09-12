@@ -21,6 +21,21 @@ const getErrorMessage = (error, fallback) =>
   error.message ||
   fallback
 
+const hasSellerAccess = (userData) => {
+  if (!userData) return false
+
+  const roles = [userData.role, userData.userType, userData.accountType]
+    .filter(Boolean)
+    .map((value) => String(value).toUpperCase())
+
+  return Boolean(
+    userData.isSeller ||
+    userData.sellerProfile ||
+    userData.sellerId ||
+    roles.includes('SELLER')
+  )
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -48,6 +63,28 @@ export const AuthProvider = ({ children }) => {
   // INITIAL SESSION CHECK
   // =========================================================
 
+  // Shared by the startup session check and by the OAuth2 redirect handler:
+  // given a token already in localStorage, fetch /auth/profile and hydrate
+  // the user. Always trusts the backend's copy of the user, not localStorage.
+  const hydrateFromToken = async () => {
+    try {
+      const response = await authAPI.getProfile()
+      const userData = response.data?.data
+
+      if (!userData) {
+        throw new Error('Empty profile response')
+      }
+
+      persistUser(userData)
+      setIsAuthenticated(true)
+      return { success: true, user: userData }
+    } catch (error) {
+      console.error('Session restore failed:', error)
+      clearSession()
+      return { success: false }
+    }
+  }
+
   useEffect(() => {
     const restoreSession = async () => {
       const token = localStorage.getItem('token')
@@ -57,27 +94,45 @@ export const AuthProvider = ({ children }) => {
         return
       }
 
-      try {
-        // Always trust the backend's copy of the user, not localStorage.
-        const response = await authAPI.getProfile()
-        const userData = response.data?.data
-
-        if (!userData) {
-          throw new Error('Empty profile response')
-        }
-
-        persistUser(userData)
-        setIsAuthenticated(true)
-      } catch (error) {
-        console.error('Session restore failed:', error)
-        clearSession()
-      } finally {
-        setLoading(false)
-      }
+      await hydrateFromToken()
+      setLoading(false)
     }
 
     restoreSession()
   }, [])
+
+  // =========================================================
+  // OAUTH2 LOGIN (Google / Facebook / etc.)
+  // =========================================================
+  // Flow: Login.jsx redirects the browser to the backend's
+  // /oauth2/authorization/{provider} endpoint. Spring Security runs the
+  // provider handshake, then its success handler redirects back to this
+  // app's /oauth2/redirect route with ?token=...&refreshToken=... in the
+  // query string. OAuthCallback.jsx reads those params and calls this.
+  const loginWithOAuthToken = async (token, refreshToken) => {
+    setLoading(true)
+
+    if (!token) {
+      setLoading(false)
+      const message = 'OAuth login did not return a token'
+      toast.error(message)
+      return { success: false, error: message }
+    }
+
+    localStorage.setItem('token', token)
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken)
+    }
+
+    const result = await hydrateFromToken()
+    setLoading(false)
+
+    if (result.success) {
+      toast.success(`Welcome${result.user?.name ? `, ${result.user.name}` : ''}!`)
+    }
+
+    return result
+  }
 
   // =========================================================
   // LOGIN
@@ -189,13 +244,25 @@ export const AuthProvider = ({ children }) => {
     setLoading(true)
 
     try {
+      // const response = await marketplaceAPI.becomeSeller({
+      //   shopName: sellerData.shopName,
+      //   description: sellerData.description,
+      //   location: sellerData.location || user?.location,
+      // })
       const response = await marketplaceAPI.becomeSeller({
         shopName: sellerData.shopName,
         description: sellerData.description,
-        location: sellerData.location || user?.location,
+        storeLogoUrl: sellerData.storeLogoUrl || '',
+        phone: sellerData.phone || user?.phone || '',
+        email: sellerData.email || user?.email || '',
+        address: sellerData.address || '',
+        city: sellerData.city || '',
+        province: sellerData.province || '',
+        location: sellerData.location || user?.location || '',
+        sellerType: sellerData.sellerType,
       })
 
-      const sellerProfile = response.data?.data
+      const sellerProfile = response.data?.data?.sellerProfile || response.data?.data
 
       const updatedUser = {
         ...user,
@@ -261,20 +328,26 @@ export const AuthProvider = ({ children }) => {
       const response = await expertAPI.approve(requestId)
       const updatedRequest = response.data?.data
 
+      // The approve endpoint doesn't always echo back the full request object
+      // (some responses are just a success message), so don't rely on it alone
+      // to know which user this request belongs to - fall back to the request
+      // we already have loaded locally.
+      const targetUserId = updatedRequest?.userId ?? expertRequests.find((r) => r.id === requestId)?.userId
+
       setExpertRequests((prev) =>
         prev.map((r) => (r.id === requestId ? { ...r, ...updatedRequest, status: 'approved' } : r))
       )
 
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === updatedRequest?.userId
+          u.id === targetUserId
             ? { ...u, userType: 'EXPERT', expertRequestStatus: 'approved' }
             : u
         )
       )
 
       // If the admin is approving their own request (edge case), keep local state in sync.
-      if (user?.id === updatedRequest?.userId) {
+      if (user?.id === targetUserId) {
         persistUser({ ...user, userType: 'EXPERT', expertRequestStatus: 'approved' })
       }
 
@@ -292,6 +365,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await expertAPI.reject(requestId)
       const updatedRequest = response.data?.data
+      const targetUserId = updatedRequest?.userId ?? expertRequests.find((r) => r.id === requestId)?.userId
 
       setExpertRequests((prev) =>
         prev.map((r) => (r.id === requestId ? { ...r, ...updatedRequest, status: 'rejected' } : r))
@@ -299,11 +373,11 @@ export const AuthProvider = ({ children }) => {
 
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === updatedRequest?.userId ? { ...u, expertRequestStatus: 'rejected' } : u
+          u.id === targetUserId ? { ...u, expertRequestStatus: 'rejected' } : u
         )
       )
 
-      if (user?.id === updatedRequest?.userId) {
+      if (user?.id === targetUserId) {
         persistUser({ ...user, expertRequestStatus: 'rejected' })
       }
 
@@ -531,6 +605,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    loginWithOAuthToken,
 
     updateUser,
     changePassword,
@@ -548,7 +623,7 @@ export const AuthProvider = ({ children }) => {
     adminUpdateUser,
     adminDeleteUser,
 
-    isSeller: !!user?.isSeller,
+    isSeller: hasSellerAccess(user),
     isAdmin: userType === 'ADMIN',
     isFarmer: userType === 'FARMER',
     isExpert: userType === 'EXPERT',

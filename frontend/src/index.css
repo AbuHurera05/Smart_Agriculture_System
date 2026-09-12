@@ -4,14 +4,15 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Brand greens */
-  --color-primary: #2e7d32;
-  --color-primary-dark: #1b5e20;
-  --color-primary-light: #4caf50;
-  --color-primary-lighter: #81c784;
-  --color-accent: #8bc34a;
-  --color-secondary: #ff9800;
-  --color-secondary-dark: #f57c00;
+  /* AgroBazaar marketplace brand — harvest orange for commerce actions,
+     deep forest for trust/nav, leaf green kept only as an "organic/fresh" accent. */
+  --color-primary: #e8590c;
+  --color-primary-dark: #b8450a;
+  --color-primary-light: #f2731c;
+  --color-primary-lighter: #ffcda3;
+  --color-accent: #2f9e44;
+  --color-secondary: #14432a;
+  --color-secondary-dark: #0b2a19;
 
   --color-danger: #ef4444;
   --color-success: #22c55e;
@@ -20,8 +21,8 @@
 
   /* Surfaces */
   --color-surface: #ffffff;
-  --color-surface-alt: #f6faf7;
-  --color-border: #e6ede8;
+  --color-surface-alt: #fdf8f3;
+  --color-border: #f0e4d8;
 
   /* Breakpoints */
   --breakpoint-sm: 640px;
@@ -34,8 +35,8 @@
   --font-family-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* Shadows */
-  --shadow-card: 0 1px 3px 0 rgb(16 40 24 / 0.06), 0 1px 2px -1px rgb(16 40 24 / 0.06);
-  --shadow-card-hover: 0 20px 30px -10px rgb(16 40 24 / 0.15), 0 8px 12px -6px rgb(16 40 24 / 0.08);
+  --shadow-card: 0 1px 3px 0 rgb(30 24 16 / 0.06), 0 1px 2px -1px rgb(30 24 16 / 0.06);
+  --shadow-card-hover: 0 20px 30px -10px rgb(30 24 16 / 0.15), 0 8px 12px -6px rgb(30 24 16 / 0.08);
 
   --animate-fade-in: fade-in 0.4s ease both;
   --animate-slide-up: slide-up 0.4s ease both;
@@ -79,8 +80,8 @@
   }
 
   .dark body {
-    background-color: #0e1712;
-    color: #e7f2ea;
+    background-color: #14100c;
+    color: #f2e9de;
   }
 
   ::-webkit-scrollbar {
@@ -93,16 +94,16 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #c1d4c7;
+    background: #e8d3bd;
     border-radius: 10px;
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    background: #2a3d32;
+    background: #3a2c20;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #9db8a5;
+    background: #d9ab7a;
   }
 }
 
@@ -117,8 +118,8 @@
   }
 
   .dark .card {
-    background-color: #142019;
-    border-color: #223a2b;
+    background-color: #1c1712;
+    border-color: #3a2c20;
   }
 
   .card-hover:hover {
@@ -135,7 +136,7 @@
     font-weight: 500;
     transition: all 0.2s ease;
     cursor: pointer;
-    box-shadow: 0 4px 14px -4px rgb(46 125 50 / 0.4);
+    box-shadow: 0 4px 14px -4px rgb(232 89 12 / 0.4);
   }
 
   .btn-primary:hover {
@@ -155,7 +156,7 @@
   }
 
   .dark .btn-secondary {
-    background-color: #142019;
+    background-color: #1c1712;
     color: var(--color-primary-lighter);
     border-color: var(--color-primary-light);
   }
@@ -177,13 +178,13 @@
   }
 
   .dark .input-field {
-    background-color: #0e1712;
-    border-color: #223a2b;
+    background-color: #14100c;
+    border-color: #3a2c20;
   }
 
   .input-field:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+    box-shadow: 0 0 0 3px rgba(232, 89, 12, 0.15);
   }
 
   .badge {
@@ -209,12 +210,12 @@
   .skeleton {
     position: relative;
     overflow: hidden;
-    background-color: #e6ede8;
+    background-color: #f0e4d8;
     border-radius: 0.5rem;
   }
 
   .dark .skeleton {
-    background-color: #1b2a21;
+    background-color: #2a2118;
   }
 
   .skeleton::after {

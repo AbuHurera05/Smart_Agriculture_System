@@ -1,30 +1,52 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   GraduationCap, Plus, Edit2, Trash2, Calendar, MapPin, Users,
-  X, Video, UserPlus, BarChart3
+  X, BarChart3
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
-import useDataStore from '../store/useDataStore'
-import { useAuthContext } from '../context/AuthContext'
+import Loader from '../components/common/Loader'
+import { workshopAPI } from '../services/api'
+import { workshopFromResponse, workshopToRequest } from '../utils/workshopMapper'
 
 const emptyForm = {
   title: '', date: '', time: '', venue: '', type: 'online',
-  capacity: 50, price: 'Free', topics: '', description: '', image: '🌱',
+  capacity: 50, price: 0, topics: '', description: '', image: '🌱',
 }
 
+const getErrorMessage = (error, fallback) =>
+  error.response?.data?.message || error.response?.data?.error || error.message || fallback
+
 export default function ExpertDashboard() {
-  const { user } = useAuthContext()
-  const { workshops, addWorkshop, updateWorkshop, deleteWorkshop } = useDataStore()
+  const [workshops, setWorkshops] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
 
-  const myWorkshops = workshops.filter((w) => w.instructorId === user?.id)
-  const totalEnrolled = myWorkshops.reduce((sum, w) => sum + (w.enrolled || 0), 0)
-  const upcomingCount = myWorkshops.filter((w) => w.status === 'upcoming').length
+  // GET /experts/workshops/my -> WorkshopController.getMyWorkshops() (EXPERT/ADMIN)
+  const loadMyWorkshops = async () => {
+    setLoading(true)
+    try {
+      const response = await workshopAPI.getMyWorkshops()
+      setWorkshops((response.data?.data || []).map(workshopFromResponse))
+    } catch (error) {
+      console.error('Failed to load your workshops:', error)
+      toast.error(getErrorMessage(error, 'Could not load your training sessions'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadMyWorkshops()
+  }, [])
+
+  const totalEnrolled = workshops.reduce((sum, w) => sum + (w.enrolled || 0), 0)
+  const upcomingCount = workshops.filter((w) => w.status === 'upcoming').length
 
   const openCreate = () => {
     setEditing(null)
@@ -41,36 +63,58 @@ export default function ExpertDashboard() {
     setShowModal(true)
   }
 
-  const handleDelete = (id) => {
-    if (window.confirm('Delete this training session? This cannot be undone.')) {
-      deleteWorkshop(id)
+  // DELETE /experts/workshops/{id} -> WorkshopController.delete() (EXPERT/ADMIN, owner-checked)
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this training session? This cannot be undone.')) return
+
+    try {
+      await workshopAPI.delete(id)
+      setWorkshops((prev) => prev.filter((w) => w.id !== id))
       toast.success('Training session deleted')
+    } catch (error) {
+      console.error('Delete workshop error:', error)
+      toast.error(getErrorMessage(error, 'Could not delete training session'))
     }
   }
 
-  const handleSubmit = (e) => {
+  // POST /experts/workshops or PUT /experts/workshops/{id}
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.title.trim() || !form.date) {
-      toast.error('Title and date are required')
+    if (!form.title.trim() || !form.date || !form.time || !form.venue.trim() || !form.description.trim()) {
+      toast.error('Title, date, time, venue and description are required')
       return
     }
 
-    const payload = {
-      ...form,
-      capacity: Number(form.capacity) || 0,
-      topics: form.topics.split(',').map((t) => t.trim()).filter(Boolean),
-      instructor: user?.name,
-      instructorId: user?.id,
-    }
+    const payload = workshopToRequest(form)
+    setSaving(true)
 
-    if (editing) {
-      updateWorkshop(editing.id, payload)
-      toast.success('Training session updated')
-    } else {
-      addWorkshop(payload)
-      toast.success('Training session created')
+    try {
+      if (editing) {
+        const response = await workshopAPI.update(editing.id, payload)
+        const updated = workshopFromResponse(response.data?.data)
+        setWorkshops((prev) => prev.map((w) => (w.id === editing.id ? updated : w)))
+        toast.success(response.data?.message || 'Training session updated')
+      } else {
+        const response = await workshopAPI.create(payload)
+        const created = workshopFromResponse(response.data?.data)
+        setWorkshops((prev) => [created, ...prev])
+        toast.success(response.data?.message || 'Training session created')
+      }
+      setShowModal(false)
+    } catch (error) {
+      console.error('Save workshop error:', error)
+      toast.error(getErrorMessage(error, 'Could not save training session'))
+    } finally {
+      setSaving(false)
     }
-    setShowModal(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader />
+      </div>
+    )
   }
 
   return (
@@ -92,7 +136,7 @@ export default function ExpertDashboard() {
           <div className="flex items-center gap-3">
             <GraduationCap className="w-8 h-8 text-primary" />
             <div>
-              <p className="text-2xl font-bold">{myWorkshops.length}</p>
+              <p className="text-2xl font-bold">{workshops.length}</p>
               <p className="text-sm text-gray-500">Sessions Created</p>
             </div>
           </div>
@@ -120,7 +164,7 @@ export default function ExpertDashboard() {
       {/* My Workshops */}
       <div>
         <h2 className="text-xl font-bold mb-4">My Training Sessions</h2>
-        {myWorkshops.length === 0 ? (
+        {workshops.length === 0 ? (
           <Card className="text-center py-12">
             <GraduationCap className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">You haven't created any training sessions yet</p>
@@ -131,7 +175,7 @@ export default function ExpertDashboard() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {myWorkshops.map((workshop) => (
+            {workshops.map((workshop) => (
               <Card key={workshop.id} hover>
                 <div className="flex gap-4">
                   <div className="text-5xl">{workshop.image || '📘'}</div>
@@ -203,8 +247,8 @@ export default function ExpertDashboard() {
                     <input type="date" className="input-field" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                    <input className="input-field" placeholder="e.g. 10:00 AM - 1:00 PM" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Time *</label>
+                    <input type="time" className="input-field" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} required />
                   </div>
                 </div>
 
@@ -214,6 +258,7 @@ export default function ExpertDashboard() {
                     <select className="input-field" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                       <option value="online">Online</option>
                       <option value="in-person">In-person</option>
+                      <option value="hybrid">Hybrid</option>
                     </select>
                   </div>
                   <div>
@@ -223,13 +268,13 @@ export default function ExpertDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
-                  <input className="input-field" placeholder="e.g. Online (Zoom) or Community Center, Delhi" value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Venue *</label>
+                  <input className="input-field" placeholder="e.g. Online (Zoom) or Community Center, Delhi" value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} required />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                  <input className="input-field" placeholder="e.g. Free or ₹499" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹, 0 for free)</label>
+                  <input type="number" min="0" step="0.01" className="input-field" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
                 </div>
 
                 <div>
@@ -238,8 +283,8 @@ export default function ExpertDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea className="input-field" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                  <textarea className="input-field" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
                 </div>
 
                 {editing && (
@@ -249,12 +294,13 @@ export default function ExpertDashboard() {
                       <option value="upcoming">Upcoming</option>
                       <option value="ongoing">Ongoing</option>
                       <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
                     </select>
                   </div>
                 )}
 
                 <div className="flex gap-3 pt-4">
-                  <Button type="submit" variant="primary" className="flex-1">
+                  <Button type="submit" variant="primary" className="flex-1" loading={saving}>
                     {editing ? 'Save Changes' : 'Create Session'}
                   </Button>
                   <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
