@@ -22,8 +22,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// A 401 means the token is missing/expired/invalid - clear it and
-// send the user back to login rather than leaving them in a broken state.
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -46,6 +45,10 @@ export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
   getProfile: () => api.get('/auth/profile'),
+  googleLogin: () => {
+    window.location.href =
+      `${API_BASE_URL}/oauth2/authorization/google`
+  },
 }
 
 // =========================================================
@@ -63,7 +66,6 @@ export const userAPI = {
 
 // =========================================================
 // ADMIN: USER MANAGEMENT  ->  AdminController  (/admin/users)
-// Requires an authenticated user with role ADMIN.
 // =========================================================
 export const adminAPI = {
   getAllUsers: () => api.get('/admin/users'),
@@ -74,13 +76,28 @@ export const adminAPI = {
 
 // =========================================================
 // EXPERT APPLICATIONS  ->  ExpertController  (/experts)
-// apply() is for any logged-in farmer; the rest require role ADMIN.
 // =========================================================
 export const expertAPI = {
   apply: (data) => api.post('/experts/apply', data),
   getAllRequests: () => api.get('/experts/requests'),
   approve: (id) => api.put(`/experts/requests/${id}/approve`),
   reject: (id) => api.put(`/experts/requests/${id}/reject`),
+}
+
+// =========================================================
+// WORKSHOPS  ->  WorkshopController  (/experts/workshops)
+// =========================================================
+export const workshopAPI = {
+  getAll: (params) => api.get('/experts/workshops', { params }),
+  getById: (id) => api.get(`/experts/workshops/${id}`),
+  getMyWorkshops: () => api.get('/experts/workshops/my'), // EXPERT/ADMIN
+  getMyEnrollments: () => api.get('/experts/workshops/my-enrollments'), // FARMER
+  create: (data) => api.post('/experts/workshops', data), // EXPERT/ADMIN
+  update: (id, data) => api.put(`/experts/workshops/${id}`, data), // EXPERT/ADMIN
+  delete: (id) => api.delete(`/experts/workshops/${id}`), // EXPERT/ADMIN
+  enroll: (id) => api.post(`/experts/workshops/${id}/enroll`), // FARMER
+  unenroll: (id) => api.delete(`/experts/workshops/${id}/enroll`), // FARMER
+  getEnrollments: (id) => api.get(`/experts/workshops/${id}/enrollments`), // EXPERT/ADMIN
 }
 
 // =========================================================
