@@ -7,7 +7,7 @@ import ApplyExpertModal from '../components/experts/ApplyExpertModal'
 import { useAuthContext } from '../context/AuthContext'
 
 export default function UserProfile() {
-  const { user, updateUser, loading, isFarmer, applyForExpert, expertRequestStatus } = useAuthContext()
+  const { user, updateUser, isFarmer, applyForExpert, expertRequestStatus } = useAuthContext()
   const fileInputRef = useRef(null)
   const [showExpertModal, setShowExpertModal] = useState(false)
 
@@ -26,6 +26,8 @@ export default function UserProfile() {
 
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' })
   const [showPassword, setShowPassword] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [savingPassword, setSavingPassword] = useState(false)
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0]
@@ -43,7 +45,16 @@ export default function UserProfile() {
 
   const handleProfileSave = async (e) => {
     e.preventDefault()
-    await updateUser(form)
+    if (!form.name.trim() || !form.email.trim()) {
+      toast.error('Name and email are required')
+      return
+    }
+    setSavingProfile(true)
+    try {
+      await updateUser(form)
+    } finally {
+      setSavingProfile(false)
+    }
   }
 
   const handlePasswordSave = async (e) => {
@@ -60,9 +71,14 @@ export default function UserProfile() {
       toast.error('Password should be at least 6 characters')
       return
     }
-    await new Promise((r) => setTimeout(r, 500))
-    toast.success('Password updated successfully')
-    setPasswordForm({ current: '', next: '', confirm: '' })
+    setSavingPassword(true)
+    try {
+      await new Promise((r) => setTimeout(r, 500))
+      toast.success('Password updated successfully')
+      setPasswordForm({ current: '', next: '', confirm: '' })
+    } finally {
+      setSavingPassword(false)
+    }
   }
 
   return (
@@ -143,27 +159,27 @@ export default function UserProfile() {
             <form onSubmit={handleProfileSave} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Full Name</label>
-                  <input className="input-field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Full Name <span className="text-danger">*</span></label>
+                  <input className="input-field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required disabled={savingProfile} />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block flex items-center gap-1"><Mail size={13} /> Email</label>
-                  <input className="input-field" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block flex items-center gap-1"><Mail size={13} /> Email <span className="text-danger">*</span></label>
+                  <input className="input-field" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required disabled={savingProfile} />
                 </div>
                 <div>
                   <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block flex items-center gap-1"><Phone size={13} /> Phone</label>
-                  <input className="input-field" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  <input className="input-field" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} disabled={savingProfile} />
                 </div>
                 <div>
                   <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block flex items-center gap-1"><MapPin size={13} /> Location</label>
-                  <input className="input-field" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                  <input className="input-field" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} disabled={savingProfile} />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block flex items-center gap-1"><Sprout size={13} /> Farm Size</label>
-                  <input className="input-field" value={form.farmSize} onChange={(e) => setForm({ ...form, farmSize: e.target.value })} />
+                  <input className="input-field" value={form.farmSize} onChange={(e) => setForm({ ...form, farmSize: e.target.value })} disabled={savingProfile} />
                 </div>
               </div>
-              <Button type="submit" loading={loading}>
+              <Button type="submit" loading={savingProfile}>
                 <Save size={16} /> Save Changes
               </Button>
             </form>
@@ -173,39 +189,47 @@ export default function UserProfile() {
             <h3 className="font-semibold mb-4 flex items-center gap-2"><Lock size={16} /> Change Password</h3>
             <form onSubmit={handlePasswordSave} className="space-y-4">
               <div>
-                <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Current Password</label>
+                <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Current Password <span className="text-danger">*</span></label>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className="input-field"
                   value={passwordForm.current}
                   onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                  required
+                  disabled={savingPassword}
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">New Password</label>
+                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">New Password <span className="text-danger">*</span></label>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="input-field"
                     value={passwordForm.next}
                     onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
+                    required
+                    minLength={6}
+                    disabled={savingPassword}
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Confirm New Password</label>
+                  <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Confirm New Password <span className="text-danger">*</span></label>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="input-field"
                     value={passwordForm.confirm}
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                    required
+                    minLength={6}
+                    disabled={savingPassword}
                   />
                 </div>
               </div>
               <label className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 cursor-pointer w-fit">
-                <input type="checkbox" checked={showPassword} onChange={() => setShowPassword((v) => !v)} />
+                <input type="checkbox" checked={showPassword} onChange={() => setShowPassword((v) => !v)} disabled={savingPassword} />
                 {showPassword ? <EyeOff size={14} /> : <Eye size={14} />} Show passwords
               </label>
-              <Button type="submit" variant="secondary">Update Password</Button>
+              <Button type="submit" variant="secondary" loading={savingPassword}>Update Password</Button>
             </form>
           </Card>
         </div>

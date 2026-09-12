@@ -1,6 +1,17 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8081/ws'
 
+// Root of the backend (without the /api prefix) — Spring Security's OAuth2
+// endpoints (/oauth2/authorization/**) live outside the /api namespace.
+export const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '')
+
+// Registration IDs must match spring.security.oauth2.client.registration.*
+// in the backend's application.yml
+export const oauthProviders = [
+  { id: 'google', name: 'Google' },
+  { id: 'facebook', name: 'Facebook' },
+]
+
 export const cropTypes = [
   { id: 1, name: 'Rice', season: 'Kharif', duration: '120-150 days' },
   { id: 2, name: 'Wheat', season: 'Rabi', duration: '100-120 days' },

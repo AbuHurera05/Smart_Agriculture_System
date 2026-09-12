@@ -1,17 +1,21 @@
-import { useState } from 'react'
-import { 
+import { useEffect, useState } from 'react'
+import {
   GraduationCap, Calendar, MapPin, Users, Clock, Video,
   Award, Search, Star, TrendingUp, ExternalLink, UserPlus
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
-import useDataStore from '../store/useDataStore'
+import Loader from '../components/common/Loader'
+import { workshopAPI } from '../services/api'
+import { workshopFromResponse } from '../utils/workshopMapper'
 import { useAuthContext } from '../context/AuthContext'
 
 export default function TrainingWorkshops() {
-  const { user } = useAuthContext()
-  const { workshops, enrollInWorkshop } = useDataStore()
+  const { isFarmer } = useAuthContext()
+  const [workshops, setWorkshops] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [enrollingId, setEnrollingId] = useState(null)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -21,21 +25,68 @@ export default function TrainingWorkshops() {
     { name: 'Precision Farming Expert', duration: '1 month', level: 'Beginner', provider: 'IIT Delhi' },
   ]
 
-  // Farmers only see live sessions that experts have published (not completed ones)
-  const visibleWorkshops = workshops.filter(w => w.status !== 'completed')
+  // GET /experts/workshops -> WorkshopController.getAll() (public endpoint)
+  const loadWorkshops = async () => {
+    setLoading(true)
+    try {
+      const response = await workshopAPI.getAll()
+      const data = (response.data?.data || []).map(workshopFromResponse)
+      setWorkshops(data)
+    } catch (error) {
+      console.error('Failed to load workshops:', error)
+      toast.error(error.response?.data?.message || 'Could not load workshops')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const filteredWorkshops = visibleWorkshops.filter(w => 
-    (filter === 'all' || w.type === filter) &&
-    (searchTerm === '' || w.title.toLowerCase().includes(searchTerm.toLowerCase()))
+  useEffect(() => {
+    loadWorkshops()
+  }, [])
+
+  // Farmers only see live sessions that experts have published (not completed/cancelled ones)
+  const visibleWorkshops = workshops.filter((w) => w.status !== 'completed' && w.status !== 'cancelled')
+
+  const filteredWorkshops = visibleWorkshops.filter(
+    (w) =>
+      (filter === 'all' || w.type === filter) &&
+      (searchTerm === '' || w.title.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  const handleEnroll = (workshop) => {
-    if (workshop.enrolled >= workshop.capacity) {
+  // POST /experts/workshops/{id}/enroll -> WorkshopController.enroll() (FARMER only)
+  const handleEnroll = async (workshop) => {
+    if (workshop.full || workshop.enrolled >= workshop.capacity) {
       toast.error('This session is full')
       return
     }
-    enrollInWorkshop(workshop.id)
-    toast.success(`Enrolled in "${workshop.title}"`)
+    if (!isFarmer) {
+      toast.error('Only farmer accounts can enroll in workshops')
+      return
+    }
+
+    setEnrollingId(workshop.id)
+    try {
+      const response = await workshopAPI.enroll(workshop.id)
+      setWorkshops((prev) =>
+        prev.map((w) => (w.id === workshop.id ? { ...w, enrolled: w.enrolled + 1 } : w))
+      )
+      toast.success(response.data?.message || `Enrolled in "${workshop.title}"`)
+    } catch (error) {
+      console.error('Enroll error:', error)
+      toast.error(error.response?.data?.message || 'Could not enroll in this session')
+    } finally {
+      setEnrollingId(null)
+    }
+  }
+
+  const formatPrice = (price) => (price > 0 ? `₹${price}` : 'Free')
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader />
+      </div>
+    )
   }
 
   return (
@@ -99,7 +150,7 @@ export default function TrainingWorkshops() {
           />
         </div>
         <div className="flex gap-2">
-          {['all', 'online', 'in-person'].map(type => (
+          {['all', 'online', 'in-person', 'hybrid'].map((type) => (
             <button
               key={type}
               onClick={() => setFilter(type)}
@@ -123,7 +174,7 @@ export default function TrainingWorkshops() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredWorkshops.map(workshop => (
+          {filteredWorkshops.map((workshop) => (
             <Card key={workshop.id} hover>
               <div className="flex gap-4">
                 <div className="text-5xl">{workshop.image}</div>
@@ -140,7 +191,7 @@ export default function TrainingWorkshops() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar className="w-4 h-4" />
@@ -157,7 +208,7 @@ export default function TrainingWorkshops() {
                       <span>{workshop.enrolled}/{workshop.capacity} enrolled</span>
                     </div>
                   </div>
-                  
+
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(workshop.topics || []).map((topic, idx) => (
                       <span key={idx} className="badge badge-info text-xs">
@@ -165,15 +216,21 @@ export default function TrainingWorkshops() {
                       </span>
                     ))}
                   </div>
-                  
+
                   <div className="mt-4 flex items-center justify-between">
                     <div>
-                      <span className="text-lg font-bold text-primary">{workshop.price}</span>
-                      {workshop.price !== 'Free' && <span className="text-xs text-gray-500"> per person</span>}
+                      <span className="text-lg font-bold text-primary">{formatPrice(workshop.price)}</span>
+                      {workshop.price > 0 && <span className="text-xs text-gray-500"> per person</span>}
                     </div>
-                    <Button variant="primary" size="sm" onClick={() => handleEnroll(workshop)}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={enrollingId === workshop.id}
+                      disabled={workshop.full}
+                      onClick={() => handleEnroll(workshop)}
+                    >
                       {workshop.type === 'online' ? <Video className="w-4 h-4 mr-1" /> : <UserPlus className="w-4 h-4 mr-1" />}
-                      Enroll Now
+                      {workshop.full ? 'Full' : 'Enroll Now'}
                     </Button>
                   </div>
                 </div>
