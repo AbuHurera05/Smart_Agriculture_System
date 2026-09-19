@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Users, Settings, Database, Shield, Activity, BarChart3, 
-  Plus, Edit2, Trash2, Eye, Search, Filter, Download, 
-  Upload, X, Check, RefreshCw, UserCheck, UserX, Clock,
-  Sprout, Newspaper, Map, TrendingUp, GraduationCap, Wifi,
-  Droplet
+import {
+  Users, Settings, Database, Activity, BarChart3,
+  Plus, Edit2, Trash2, Eye, Search, Filter, Download,
+  Upload, X, RefreshCw,
+  Sprout, Map, TrendingUp, GraduationCap, Wifi,
+  Store, Package, CheckCircle2, XCircle, Clock,
 } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '../context/AuthContext'
-import useDataStore from '../store/useDataStore'
-import { workshopAPI } from '../services/api'
-import { workshopFromResponse, workshopToRequest } from '../utils/workshopMapper'
+import { marketplaceAdminAPI } from '../services/api'
 
 const getErrorMessage = (error, fallback) =>
   error.response?.data?.message || error.response?.data?.error || error.message || fallback
@@ -22,20 +20,11 @@ export default function AdminPanel() {
   const navigate = useNavigate()
   const {
     users, fetchUsers, adminAddUser, adminUpdateUser, adminDeleteUser,
-    expertRequests, fetchExpertRequests, approveExpertRequest, rejectExpertRequest,
   } = useAuthContext()
-  const {
-    news, fetchNews, addNews, updateNews, deleteNews, togglePublishNews,
-  } = useDataStore()
-
-  // Workshops are real expert-service records (GET/POST/PUT/DELETE
-  // /experts/workshops) - the ADMIN role is authorized for the same
-  // create/update/delete endpoints as EXPERT, so this tab talks to the
-  // same workshopAPI as ExpertDashboard.jsx / TrainingWorkshops.jsx.
-  const [workshops, setWorkshops] = useState([])
 
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(false)
+  const [usersLoading, setUsersLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState('add')
   const [selectedItem, setSelectedItem] = useState(null)
@@ -43,26 +32,15 @@ export default function AdminPanel() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  const loadWorkshops = async () => {
-    try {
-      const response = await workshopAPI.getAll()
-      setWorkshops((response.data?.data || []).map(workshopFromResponse))
-    } catch (error) {
-      console.error('Failed to load workshops:', error)
-      toast.error(getErrorMessage(error, 'Could not load workshops'))
-    }
-  }
-
-  // `users` and `expertRequests` live in AuthContext and are backed by the
-  // real backend (GET /admin/users, GET /experts/requests) - load them once
-  // when the panel mounts. `workshops` and `news` are backed by their own
-  // services too (expert-service, news-service).
+  // `users` lives in AuthContext and is backed by the real backend
+  // (GET /admin/users) - load it once when the panel mounts.
   useEffect(() => {
-    fetchUsers()
-    fetchExpertRequests()
-    loadWorkshops()
-    fetchNews()
-  }, [fetchUsers, fetchExpertRequests, fetchNews])
+    (async () => {
+      setUsersLoading(true)
+      await fetchUsers()
+      setUsersLoading(false)
+    })()
+  }, [fetchUsers])
 
   // Data States (sensors & crops are still frontend-only reference data -
   // the backend has no admin CRUD endpoints for them yet, only read-only
@@ -89,38 +67,122 @@ export default function AdminPanel() {
     activeSensors: sensors.filter(s => s.status === 'active').length,
     totalFarms: users.filter(u => (u.userType || '').toUpperCase() === 'FARMER').length,
     cropsPlanted: crops.length,
-    waterSaved: '1.2M L',
-    yieldIncrease: '23%',
-    revenue: '$45.2K',
-    systemUptime: '99.9%'
   }
-
-  const pendingExpertRequests = expertRequests.filter(r => r.status === 'pending')
 
   const stats = [
     { label: 'Total Users', value: analytics.totalUsers, icon: Users, change: '+12%', color: 'text-blue-600' },
     { label: 'Active Sensors', value: analytics.activeSensors, icon: Activity, change: '+5%', color: 'text-green-600' },
     { label: 'Total Farmers', value: analytics.totalFarms, icon: Map, change: '+8%', color: 'text-purple-600' },
     { label: 'Crops Tracked', value: analytics.cropsPlanted, icon: Sprout, change: '+15%', color: 'text-orange-600' },
-    { label: 'Water Saved', value: analytics.waterSaved, icon: Droplet, change: '+23%', color: 'text-cyan-600' },
-    { label: 'Yield Increase', value: analytics.yieldIncrease, icon: TrendingUp, change: '+5%', color: 'text-emerald-600' },
-    { label: 'Revenue', value: analytics.revenue, icon: Database, change: '+18%', color: 'text-yellow-600' },
-    { label: 'System Uptime', value: analytics.systemUptime, icon: Shield, change: '+0.1%', color: 'text-indigo-600' },
   ]
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'users', label: 'User Management', icon: Users },
-    { id: 'expertRequests', label: 'Expert Requests', icon: GraduationCap, badge: pendingExpertRequests.length },
+    { id: 'sellerRequests', label: 'Seller Requests', icon: Store },
+    { id: 'productApprovals', label: 'Product Approvals', icon: Package },
     { id: 'sensors', label: 'Sensor Management', icon: Wifi },
     { id: 'crops', label: 'Crop Database', icon: Sprout },
-    { id: 'news', label: 'News Management', icon: Newspaper },
-    { id: 'workshops', label: 'Workshops', icon: GraduationCap },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'settings', label: 'System Settings', icon: Settings },
   ]
 
-  // ---------------- Generic CRUD (users / sensors / crops / news / workshops) ----------------
+  // ---------------- Marketplace moderation (real backend data) ----------------
+  // Sellers apply via POST /marketplace/sellers/register (status PENDING) and
+  // products via POST /marketplace/products (status PENDING_APPROVAL) - both
+  // need an admin decision here before they go live. See AdminController.
+
+  const [pendingSellers, setPendingSellers] = useState([])
+  const [pendingSellersLoaded, setPendingSellersLoaded] = useState(false)
+  const [pendingSellersLoading, setPendingSellersLoading] = useState(false)
+
+  const [pendingProducts, setPendingProducts] = useState([])
+  const [pendingProductsLoaded, setPendingProductsLoaded] = useState(false)
+  const [pendingProductsLoading, setPendingProductsLoading] = useState(false)
+
+  const [moderationActionId, setModerationActionId] = useState(null)
+
+  const loadPendingSellers = async () => {
+    setPendingSellersLoading(true)
+    try {
+      const res = await marketplaceAdminAPI.getPendingSellers()
+      setPendingSellers(res.data?.data ?? res.data ?? [])
+      setPendingSellersLoaded(true)
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Could not load seller requests'))
+    } finally {
+      setPendingSellersLoading(false)
+    }
+  }
+
+  const loadPendingProducts = async () => {
+    setPendingProductsLoading(true)
+    try {
+      const res = await marketplaceAdminAPI.getPendingProducts()
+      setPendingProducts(res.data?.data ?? res.data ?? [])
+      setPendingProductsLoaded(true)
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Could not load product approvals'))
+    } finally {
+      setPendingProductsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'sellerRequests' && !pendingSellersLoaded) loadPendingSellers()
+    if (activeTab === 'productApprovals' && !pendingProductsLoaded) loadPendingProducts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
+
+  const handleSellerAction = async (id, action) => {
+    let reason
+    if (action === 'reject' || action === 'suspend') {
+      reason = window.prompt(`Reason for ${action === 'reject' ? 'rejecting' : 'suspending'} this seller (shown to them):`) || undefined
+      if (reason === undefined) return // cancelled
+    }
+    setModerationActionId(id)
+    try {
+      const call = {
+        approve: () => marketplaceAdminAPI.approveSeller(id),
+        reject: () => marketplaceAdminAPI.rejectSeller(id, reason),
+        suspend: () => marketplaceAdminAPI.suspendSeller(id, reason),
+        verify: () => marketplaceAdminAPI.verifySeller(id),
+      }[action]
+      const res = await call()
+      toast.success(res.data?.message || 'Done')
+      setPendingSellers((prev) => (action === 'approve' || action === 'reject') ? prev.filter((s) => s.id !== id) : prev)
+      if (action !== 'approve' && action !== 'reject') await loadPendingSellers()
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Action failed'))
+    } finally {
+      setModerationActionId(null)
+    }
+  }
+
+  const handleProductAction = async (id, action) => {
+    let reason
+    if (action === 'reject' || action === 'suspend') {
+      reason = window.prompt(`Reason for ${action === 'reject' ? 'rejecting' : 'suspending'} this product (shown to the seller):`) || undefined
+      if (reason === undefined) return // cancelled
+    }
+    setModerationActionId(id)
+    try {
+      const call = {
+        approve: () => marketplaceAdminAPI.approveProduct(id),
+        reject: () => marketplaceAdminAPI.rejectProduct(id, reason),
+        suspend: () => marketplaceAdminAPI.suspendProduct(id, reason),
+      }[action]
+      const res = await call()
+      toast.success(res.data?.message || 'Done')
+      setPendingProducts((prev) => prev.filter((p) => p.id !== id))
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Action failed'))
+    } finally {
+      setModerationActionId(null)
+    }
+  }
+
+  // ---------------- Generic CRUD (users / sensors / crops) ----------------
 
   const [formData, setFormData] = useState({})
 
@@ -151,14 +213,6 @@ export default function AdminPanel() {
         return
       }
 
-      // Workshops are also real backend records (DELETE /experts/workshops/{id}).
-      if (activeTab === 'workshops') {
-        await workshopAPI.delete(id)
-        setWorkshops(prev => prev.filter(w => w.id !== id))
-        toast.success('Item deleted successfully')
-        return
-      }
-
       // Everything else here is still frontend-only mock/store data.
       await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -169,13 +223,10 @@ export default function AdminPanel() {
         case 'crops':
           setCrops(prev => prev.filter(c => c.id !== id))
           break
-        case 'news':
-          deleteNews(id)
-          break
       }
       toast.success('Item deleted successfully')
     } catch (error) {
-      toast.error(activeTab === 'workshops' ? getErrorMessage(error, 'Failed to delete item') : 'Failed to delete item')
+      toast.error('Failed to delete item')
     } finally {
       setLoading(false)
     }
@@ -208,23 +259,6 @@ export default function AdminPanel() {
         return
       }
 
-      // Workshops are also real backend records (POST/PUT /experts/workshops).
-      if (activeTab === 'workshops') {
-        const payload = workshopToRequest(formData)
-
-        if (modalType === 'add') {
-          const response = await workshopAPI.create(payload)
-          setWorkshops(prev => [workshopFromResponse(response.data?.data), ...prev])
-        } else {
-          const response = await workshopAPI.update(selectedItem.id, payload)
-          setWorkshops(prev => prev.map(w => (w.id === selectedItem.id ? workshopFromResponse(response.data?.data) : w)))
-        }
-
-        toast.success(modalType === 'add' ? 'Item added successfully' : 'Item updated successfully')
-        setShowModal(false)
-        return
-      }
-
       // Everything else here is still frontend-only mock/store data.
       await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -240,9 +274,6 @@ export default function AdminPanel() {
             setCrops(prev => [...prev, { ...formData, id: newId }])
             break
           }
-          case 'news':
-            addNews({ ...formData, date: new Date().toISOString().split('T')[0], image: formData.image || '📰' })
-            break
         }
         toast.success('Item added successfully')
       } else {
@@ -253,26 +284,21 @@ export default function AdminPanel() {
           case 'crops':
             setCrops(prev => prev.map(c => c.id === selectedItem.id ? { ...formData, id: selectedItem.id } : c))
             break
-          case 'news':
-            updateNews(selectedItem.id, formData)
-            break
         }
         toast.success('Item updated successfully')
       }
 
       setShowModal(false)
     } catch (error) {
-      toast.error(activeTab === 'workshops' ? getErrorMessage(error, 'Operation failed') : 'Operation failed')
+      toast.error('Operation failed')
     } finally {
       setLoading(false)
     }
   }
 
-  // Directly grant/revoke a user's expert access, independent of the
-  // apply/approve/reject workflow - useful when an admin wants to demote
-  // an existing expert, or promote a farmer without them applying first.
-  // There's no dedicated backend endpoint for this, so it just updates
-  // userType via the same PUT /admin/users/{id} call the edit form uses.
+  // Directly grant/revoke a user's expert access - there's no dedicated
+  // backend endpoint for this, so it just updates userType via the same
+  // PUT /admin/users/{id} call the edit form uses.
   const handleToggleExpertAccess = async (targetUser) => {
     const isExpert = (targetUser.userType || '').toUpperCase() === 'EXPERT'
     const nextUserType = isExpert ? 'FARMER' : 'EXPERT'
@@ -304,8 +330,6 @@ export default function AdminPanel() {
       case 'users': return users
       case 'sensors': return sensors
       case 'crops': return crops
-      case 'news': return news
-      case 'workshops': return workshops
       default: return []
     }
   }
@@ -337,28 +361,6 @@ export default function AdminPanel() {
           { name: 'duration', label: 'Duration', type: 'text', required: true },
           { name: 'waterReq', label: 'Water Requirement', type: 'text', required: true },
         ]
-      case 'news':
-        return [
-          { name: 'title', label: 'Title', type: 'text', required: true },
-          { name: 'category', label: 'Category', type: 'select', options: ['Policy', 'Technology', 'Market', 'Events', 'Research'], required: true },
-          { name: 'summary', label: 'Summary', type: 'text', required: true },
-          { name: 'content', label: 'Full Content', type: 'textarea', required: true },
-          { name: 'author', label: 'Author', type: 'text', required: true },
-          { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published'], required: true },
-        ]
-      case 'workshops':
-        return [
-          { name: 'title', label: 'Workshop Title', type: 'text', required: true },
-          { name: 'date', label: 'Date', type: 'date', required: true },
-          { name: 'time', label: 'Time', type: 'time', required: true },
-          { name: 'venue', label: 'Venue', type: 'text', required: true },
-          { name: 'type', label: 'Type', type: 'select', options: ['online', 'in-person', 'hybrid'], required: true },
-          { name: 'capacity', label: 'Capacity', type: 'number', required: true },
-          { name: 'price', label: 'Price (₹, 0 for free)', type: 'number', required: true },
-          { name: 'topics', label: 'Topics (comma separated)', type: 'text' },
-          { name: 'description', label: 'Description', type: 'textarea', required: true },
-          { name: 'status', label: 'Status', type: 'select', options: ['upcoming', 'ongoing', 'completed', 'cancelled'], required: modalType === 'edit' },
-        ]
       default: return []
     }
   }
@@ -371,6 +373,16 @@ export default function AdminPanel() {
       )
     )
     const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+    if (activeTab === 'users' && usersLoading) {
+      return (
+        <div className="p-6 space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="skeleton h-10 rounded-lg" />
+          ))}
+        </div>
+      )
+    }
 
     if (data.length === 0) {
       return (
@@ -387,13 +399,20 @@ export default function AdminPanel() {
 
     // Columns to actually render per tab (avoid dumping every raw field, e.g. passwords)
     const columnsByTab = {
-      users: ['name', 'email', 'role', 'userType', 'expertRequestStatus'],
+      users: ['name', 'email', 'role', 'userType'],
       sensors: ['name', 'type', 'location', 'status', 'battery'],
       crops: ['name', 'season', 'duration', 'waterReq'],
-      news: ['title', 'category', 'status', 'date', 'views'],
-      workshops: ['title', 'instructor', 'date', 'status', 'enrolled', 'capacity'],
     }
     const columns = columnsByTab[activeTab] || Object.keys(paginatedData[0] || {}).filter(key => key !== 'id')
+
+    if (filteredData.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Search className="w-10 h-10 mx-auto text-gray-300 mb-3" />
+          <p className="text-gray-500">No results match "{searchTerm}"</p>
+        </div>
+      )
+    }
 
     return (
       <div className="overflow-x-auto">
@@ -415,14 +434,10 @@ export default function AdminPanel() {
                   const value = item[key]
                   return (
                     <td key={key} className="px-6 py-4 text-sm text-gray-900">
-                      {activeTab === 'news' && key === 'status' ? (
-                        <span className={`badge ${value === 'published' ? 'badge-success' : 'badge-warning'} text-xs capitalize`}>{value}</span>
-                      ) : activeTab === 'users' && key === 'role' ? (
+                      {activeTab === 'users' && key === 'role' ? (
                         <span className={`badge ${value === 'ADMIN' ? 'badge-danger' : 'badge-info'} text-xs`}>{value}</span>
                       ) : activeTab === 'users' && key === 'userType' ? (
                         <span className={`badge ${value === 'ADMIN' ? 'badge-danger' : value === 'EXPERT' ? 'badge-info' : 'badge-success'} text-xs capitalize`}>{value}</span>
-                      ) : activeTab === 'users' && key === 'expertRequestStatus' ? (
-                        value ? <span className={`badge ${value === 'pending' ? 'badge-warning' : value === 'approved' ? 'badge-success' : 'badge-danger'} text-xs capitalize`}>{value}</span> : <span className="text-gray-400">—</span>
                       ) : Array.isArray(value) ? value.join(', ') : (value ?? <span className="text-gray-400">—</span>)}
                     </td>
                   )
@@ -435,15 +450,6 @@ export default function AdminPanel() {
                       title="View complete profile"
                     >
                       <Eye className="w-4 h-4" />
-                    </button>
-                  )}
-                  {activeTab === 'news' && (
-                    <button
-                      onClick={() => { togglePublishNews(item.id); toast.success(item.status === 'published' ? 'Unpublished' : 'Published') }}
-                      className="text-gray-500 hover:text-gray-900 mr-3"
-                      title={item.status === 'published' ? 'Unpublish' : 'Publish'}
-                    >
-                      {item.status === 'published' ? <UserX className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                     </button>
                   )}
                   {activeTab === 'users' && (item.userType || '').toUpperCase() !== 'ADMIN' && (
@@ -505,7 +511,7 @@ export default function AdminPanel() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
           <p className="text-gray-600 mt-1">Complete system management and analytics</p>
@@ -515,7 +521,7 @@ export default function AdminPanel() {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button variant="primary" size="sm" onClick={() => { fetchUsers(); fetchExpertRequests() }}>
+          <Button variant="primary" size="sm" onClick={() => fetchUsers()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Sync
           </Button>
@@ -539,19 +545,6 @@ export default function AdminPanel() {
               </div>
             </Card>
           ))}
-          {pendingExpertRequests.length > 0 && (
-            <Card className="lg:col-span-4 border border-yellow-200 bg-yellow-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <GraduationCap className="w-6 h-6 text-yellow-700" />
-                  <p className="text-sm text-yellow-800">
-                    <strong>{pendingExpertRequests.length}</strong> expert application{pendingExpertRequests.length > 1 ? 's' : ''} awaiting your review.
-                  </p>
-                </div>
-                <Button variant="secondary" size="sm" onClick={() => setActiveTab('expertRequests')}>Review Now</Button>
-              </div>
-            </Card>
-          )}
         </div>
       )}
 
@@ -574,81 +567,110 @@ export default function AdminPanel() {
             >
               <item.icon className="w-4 h-4" />
               {item.label}
-              {!!item.badge && (
-                <span className="bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                  {item.badge}
-                </span>
-              )}
             </button>
           ))}
         </nav>
       </div>
 
-      {/* Expert Requests Tab */}
-      {activeTab === 'expertRequests' && (
-        <Card className="overflow-hidden" noPadding>
-          {expertRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <GraduationCap className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">No expert applications yet</p>
+      {/* Seller Requests */}
+      {activeTab === 'sellerRequests' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Sellers awaiting approval to start listing on the marketplace.</p>
+            <Button variant="secondary" size="sm" onClick={loadPendingSellers} disabled={pendingSellersLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${pendingSellersLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+
+          {pendingSellersLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)}
             </div>
+          ) : pendingSellers.length === 0 ? (
+            <Card className="text-center py-12">
+              <Store className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500">No pending seller requests</p>
+            </Card>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applicant</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specialization</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Experience</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {expertRequests.map((req) => (
-                    <tr key={req.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm">
-                        <p className="font-medium text-gray-900">{req.name}</p>
-                        <p className="text-gray-500 text-xs">{req.email}</p>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{req.specialization}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{req.experience}</td>
-                      {/* requestDate comes back as an ISO Instant from the backend */}
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {req.requestDate ? new Date(req.requestDate).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`badge ${req.status === 'pending' ? 'badge-warning' : req.status === 'approved' ? 'badge-success' : 'badge-danger'} text-xs capitalize flex items-center gap-1 w-fit`}>
-                          {req.status === 'pending' && <Clock className="w-3 h-3" />}
-                          {req.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {req.status === 'pending' ? (
-                          <div className="flex justify-end gap-2">
-                            <Button variant="primary" size="sm" onClick={() => approveExpertRequest(req.id)}>
-                              <UserCheck className="w-4 h-4 mr-1" /> Approve
-                            </Button>
-                            <Button variant="danger" size="sm" onClick={() => rejectExpertRequest(req.id)}>
-                              <UserX className="w-4 h-4 mr-1" /> Reject
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">No action needed</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            pendingSellers.map((s) => (
+              <Card key={s.id}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900">{s.shopName}</p>
+                      <span className="badge badge-warning text-xs inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-0.5">{s.sellerName} • {s.sellerType?.replaceAll('_', ' ')}</p>
+                    <p className="text-sm text-gray-500">{s.email} {s.phone && `• ${s.phone}`}</p>
+                    {s.location && <p className="text-xs text-gray-400 mt-0.5">{s.location}</p>}
+                    {s.description && <p className="text-sm text-gray-600 mt-2 max-w-xl">{s.description}</p>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button variant="primary" size="sm" loading={moderationActionId === s.id} onClick={() => handleSellerAction(s.id, 'approve')}>
+                      <CheckCircle2 className="w-4 h-4 mr-1" /> Approve
+                    </Button>
+                    <Button variant="secondary" size="sm" disabled={moderationActionId === s.id} onClick={() => handleSellerAction(s.id, 'reject')}>
+                      <XCircle className="w-4 h-4 mr-1" /> Reject
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
           )}
-        </Card>
+        </div>
       )}
 
-      {/* Management Content (users / sensors / crops / news / workshops) */}
-      {['users', 'sensors', 'crops', 'news', 'workshops'].includes(activeTab) && (
+      {/* Product Approvals */}
+      {activeTab === 'productApprovals' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">New or edited listings awaiting approval before they go live.</p>
+            <Button variant="secondary" size="sm" onClick={loadPendingProducts} disabled={pendingProductsLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${pendingProductsLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+
+          {pendingProductsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)}
+            </div>
+          ) : pendingProducts.length === 0 ? (
+            <Card className="text-center py-12">
+              <Package className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500">No products waiting for approval</p>
+            </Card>
+          ) : (
+            pendingProducts.map((p) => (
+              <Card key={p.id}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900">{p.title}</p>
+                      <span className="badge badge-warning text-xs inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Pending Approval</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-0.5">{p.sellerShopName} • {p.category}</p>
+                    <p className="text-sm text-gray-600 mt-1">Rs. {p.price} / {p.unit} • {p.stock} in stock</p>
+                    {p.description && <p className="text-sm text-gray-600 mt-2 max-w-xl line-clamp-2">{p.description}</p>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button variant="primary" size="sm" loading={moderationActionId === p.id} onClick={() => handleProductAction(p.id, 'approve')}>
+                      <CheckCircle2 className="w-4 h-4 mr-1" /> Approve
+                    </Button>
+                    <Button variant="secondary" size="sm" disabled={moderationActionId === p.id} onClick={() => handleProductAction(p.id, 'reject')}>
+                      <XCircle className="w-4 h-4 mr-1" /> Reject
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Management Content (users / sensors / crops) */}
+      {['users', 'sensors', 'crops'].includes(activeTab) && (
         <div>
           {/* Search and Actions Bar */}
           <div className="flex flex-wrap gap-4 mb-6">
@@ -666,11 +688,11 @@ export default function AdminPanel() {
               <Plus className="w-4 h-4 mr-2" />
               Add New
             </Button>
-            <Button variant="secondary">
+            <Button variant="secondary" disabled title="Coming soon">
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
-            <Button variant="secondary">
+            <Button variant="secondary" disabled title="Coming soon">
               <Upload className="w-4 h-4 mr-2" />
               Import
             </Button>
@@ -704,7 +726,7 @@ export default function AdminPanel() {
                       <span className="text-sm text-gray-500">{sensor.value}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-primary rounded-full h-2 transition-all"
                         style={{ width: sensor.battery }}
                       />

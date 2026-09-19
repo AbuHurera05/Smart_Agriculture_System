@@ -2,17 +2,9 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
   Radio,
-  TrendingUp,
   Gauge,
   Sprout,
   CloudRain,
-  Smartphone,
-  Users,
-  Map,
-  Droplet,
-  FlaskConical,
-  GraduationCap,
-
   ShoppingBag,
   MessageCircle,
   UserCircle,
@@ -32,7 +24,6 @@ const menuGroups = [
     items: [
       { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { path: '/live-monitoring', icon: Radio, label: 'Live Monitoring' },
-      { path: '/analytics', icon: TrendingUp, label: 'Analytics' },
       { path: '/sensor-details', icon: Gauge, label: 'Sensor Details' },
     ],
   },
@@ -40,31 +31,24 @@ const menuGroups = [
     label: 'Farm Management',
     items: [
       { path: '/crop-guide', icon: Sprout, label: 'Crop Guide' },
-      { path: '/irrigation', icon: Droplet, label: 'Irrigation Advice' },
-      { path: '/soil-testing', icon: FlaskConical, label: 'Soil Testing' },
-      { path: '/land-management', icon: Map, label: 'Land Management' },
       { path: '/weather', icon: CloudRain, label: 'Live Weather' },
     ],
   },
   {
-    label: 'Community',
+    label: 'Marketplace',
     items: [
-      { path: '/farmer-network', icon: Users, label: 'Farmer Network' },
       { path: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
-      { path: '/training', icon: GraduationCap, label: 'Training Workshops' },
     ],
   },
   {
     label: 'Tools',
     items: [
       { path: '/chatbot', icon: MessageCircle, label: 'AI Chatbot' },
-      { path: '/mobile-view', icon: Smartphone, label: 'Mobile View' },
     ],
   },
   {
     label: 'Account',
     items: [
-      { path: '/expert', icon: GraduationCap, label: 'Expert Dashboard', expertOnly: true },
       { path: '/profile', icon: UserCircle, label: 'Profile' },
       { path: '/settings', icon: SettingsIcon, label: 'Settings' },
       { path: '/admin', icon: ShieldCheck, label: 'Admin Panel', adminOnly: true },
@@ -74,7 +58,7 @@ const menuGroups = [
 
 export default function Sidebar() {
   const { sidebarOpen, toggleSidebar, mobileSidebarOpen, closeMobileSidebar } = useStore()
-  const { isAdmin, isExpert } = useAuthContext()
+  const { isAdmin } = useAuthContext()
 
   const collapsed = !sidebarOpen
 
@@ -105,9 +89,7 @@ export default function Sidebar() {
 
       <nav className="flex-1 mt-3 overflow-y-auto pb-4">
         {menuGroups.map((group) => {
-          const items = group.items.filter((item) =>
-            !(item.adminOnly && !isAdmin) && !(item.expertOnly && !isExpert && !isAdmin)
-          )
+          const items = group.items.filter((item) => !(item.adminOnly && !isAdmin))
           if (items.length === 0) return null
           return (
             <div key={group.label} className="mb-2">

@@ -1,20 +1,13 @@
 import { useRef, useState } from 'react'
-import { Camera, Mail, Phone, MapPin, Sprout, Save, Lock, Eye, EyeOff, BadgeCheck, GraduationCap, Clock } from 'lucide-react'
+import { Camera, Mail, Phone, MapPin, Sprout, Save, Lock, Eye, EyeOff, BadgeCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
-import ApplyExpertModal from '../components/experts/ApplyExpertModal'
 import { useAuthContext } from '../context/AuthContext'
 
 export default function UserProfile() {
-  const { user, updateUser, isFarmer, applyForExpert, expertRequestStatus } = useAuthContext()
+  const { user, updateUser, changePassword } = useAuthContext()
   const fileInputRef = useRef(null)
-  const [showExpertModal, setShowExpertModal] = useState(false)
-
-  const handleApplyExpert = async (data) => {
-    const res = await applyForExpert(data)
-    if (res.success) setShowExpertModal(false)
-  }
 
   const [form, setForm] = useState({
     name: user?.name || '',
@@ -73,9 +66,13 @@ export default function UserProfile() {
     }
     setSavingPassword(true)
     try {
-      await new Promise((r) => setTimeout(r, 500))
-      toast.success('Password updated successfully')
-      setPasswordForm({ current: '', next: '', confirm: '' })
+      const result = await changePassword({
+        currentPassword: passwordForm.current,
+        newPassword: passwordForm.next,
+      })
+      if (result.success) {
+        setPasswordForm({ current: '', next: '', confirm: '' })
+      }
     } finally {
       setSavingPassword(false)
     }
@@ -126,30 +123,6 @@ export default function UserProfile() {
               <p className="font-medium">{user?.farmSize || '—'}</p>
             </div>
           </div>
-
-          {isFarmer && (
-            <div className="mt-6 pt-6 border-t text-left">
-              {expertRequestStatus === 'pending' ? (
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-50 text-yellow-800">
-                  <Clock size={16} className="shrink-0 mt-0.5" />
-                  <p className="text-sm">Your expert application is pending admin approval.</p>
-                </div>
-              ) : expertRequestStatus === 'rejected' ? (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 text-red-700">
-                    <p className="text-sm">Your previous expert application was not approved.</p>
-                  </div>
-                  <Button variant="secondary" className="w-full" onClick={() => setShowExpertModal(true)}>
-                    <GraduationCap size={16} /> Re-apply as an Expert
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="secondary" className="w-full" onClick={() => setShowExpertModal(true)}>
-                  <GraduationCap size={16} /> Apply to Become an Expert
-                </Button>
-              )}
-            </div>
-          )}
         </Card>
 
         {/* Edit forms */}
@@ -234,10 +207,6 @@ export default function UserProfile() {
           </Card>
         </div>
       </div>
-
-      {showExpertModal && (
-        <ApplyExpertModal onClose={() => setShowExpertModal(false)} onSubmit={handleApplyExpert} />
-      )}
     </div>
   )
 }

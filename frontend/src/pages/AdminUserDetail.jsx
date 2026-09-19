@@ -30,8 +30,7 @@ export default function AdminUserDetail() {
 
   const targetUser = users.find((u) => String(u.id) === String(userId))
 
-  // Directly grant/revoke expert access, independent of the apply/approve
-  // workflow - just updates userType via PUT /admin/users/{id}.
+  // Grant/revoke expert access by updating userType via PUT /admin/users/{id}.
   const handleToggleExpertAccess = async () => {
     const isExpert = (targetUser.userType || '').toUpperCase() === 'EXPERT'
     const nextUserType = isExpert ? 'FARMER' : 'EXPERT'
@@ -118,7 +117,7 @@ export default function AdminUserDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 text-sm">
           <div className="p-3 rounded-xl bg-gray-50">
             <p className="text-gray-400 text-xs">Farm Size</p>
             <p className="font-medium">{targetUser.farmSize || '—'}</p>
@@ -130,10 +129,6 @@ export default function AdminUserDetail() {
           <div className="p-3 rounded-xl bg-gray-50">
             <p className="text-gray-400 text-xs">Experience</p>
             <p className="font-medium">{targetUser.experience || '—'}</p>
-          </div>
-          <div className="p-3 rounded-xl bg-gray-50">
-            <p className="text-gray-400 text-xs">Expert Request</p>
-            <p className="font-medium capitalize">{targetUser.expertRequestStatus || '—'}</p>
           </div>
         </div>
       </Card>
