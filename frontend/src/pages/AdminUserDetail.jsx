@@ -2,18 +2,17 @@ import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, BadgeCheck,
-  Map, Wifi, Sprout, Activity, Battery, GraduationCap
+  Map, Wifi, Sprout, Activity, Battery, GraduationCap,
 } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { useAuthContext } from '../context/AuthContext'
 import { generateUserFarmData } from '../utils/mockUserData'
 
-// Backend's UserResponse.userType is the business role: ADMIN / FARMER / EXPERT.
 const userTypeBadge = {
-  admin: 'badge-danger',
-  expert: 'badge-info',
-  farmer: 'badge-success',
+  admin: 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400',
+  expert: 'bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400',
+  farmer: 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400',
 }
 
 export default function AdminUserDetail() {
@@ -21,16 +20,12 @@ export default function AdminUserDetail() {
   const navigate = useNavigate()
   const { users, fetchUsers, adminUpdateUser } = useAuthContext()
 
-  // This page can be opened directly via URL (not just navigated to from
-  // AdminPanel), so make sure `users` is actually loaded rather than
-  // assuming AdminPanel's fetch already ran.
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
   const targetUser = users.find((u) => String(u.id) === String(userId))
 
-  // Grant/revoke expert access by updating userType via PUT /admin/users/{id}.
   const handleToggleExpertAccess = async () => {
     const isExpert = (targetUser.userType || '').toUpperCase() === 'EXPERT'
     const nextUserType = isExpert ? 'FARMER' : 'EXPERT'
@@ -52,18 +47,16 @@ export default function AdminUserDetail() {
     })
   }
 
-  // No backend endpoint yet returns a farmer's fields/sensors/crops/activity
-  // feed, so this stays mocked until one exists.
   const farmData = useMemo(() => generateUserFarmData(userId), [userId])
 
   if (!targetUser) {
     return (
       <div className="space-y-6">
         <Button variant="secondary" onClick={() => navigate('/admin')}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Admin Panel
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Admin Panel
         </Button>
-        <Card className="text-center py-12">
-          <p className="text-gray-500">User not found.</p>
+        <Card className="py-12 text-center">
+          <p className="text-sm font-medium text-slate-500">User not found.</p>
         </Card>
       </div>
     )
@@ -73,36 +66,55 @@ export default function AdminUserDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <Button variant="secondary" onClick={() => navigate('/admin')}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Admin Panel
-        </Button>
-      </div>
+      <Button variant="secondary" onClick={() => navigate('/admin')}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Admin Panel
+      </Button>
 
       {/* Profile summary */}
       <Card>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-light to-primary flex items-center justify-center text-white text-3xl">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 text-3xl text-white shadow-lg shadow-green-600/25">
               <span>{targetUser.avatar || '🧑‍🌾'}</span>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{targetUser.name}</h1>
-              <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
-                <span className="flex items-center gap-1"><Mail className="w-4 h-4" /> {targetUser.email}</span>
-                {targetUser.phone && <span className="flex items-center gap-1"><Phone className="w-4 h-4" /> {targetUser.phone}</span>}
-                {targetUser.location && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {targetUser.location}</span>}
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">
+                {targetUser.name}
+              </h1>
+              <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1">
+                  <Mail className="h-4 w-4" /> {targetUser.email}
+                </span>
+                {targetUser.phone && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" /> {targetUser.phone}
+                  </span>
+                )}
+                {targetUser.location && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" /> {targetUser.location}
+                  </span>
+                )}
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <span className={`badge ${userTypeBadge[userType] || 'badge-info'} inline-flex items-center gap-1 capitalize`}>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold capitalize ring-1 ring-inset ${
+                userTypeBadge[userType] || userTypeBadge.farmer
+              }`}
+            >
               <BadgeCheck size={12} /> {targetUser.userType || 'Unknown'}
             </span>
-            <span className="text-xs text-gray-400">Security role: {targetUser.role || '—'}</span>
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Joined {targetUser.joinDate ? new Date(targetUser.joinDate).toLocaleDateString() : '—'}
+            <span className="text-xs text-slate-400">
+              Security role: {targetUser.role || '—'}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <Calendar className="h-3 w-3" />
+              Joined{' '}
+              {targetUser.joinDate
+                ? new Date(targetUser.joinDate).toLocaleDateString()
+                : '—'}
             </span>
             {userType !== 'admin' && (
               <Button
@@ -110,44 +122,74 @@ export default function AdminUserDetail() {
                 size="sm"
                 onClick={handleToggleExpertAccess}
               >
-                <GraduationCap className="w-4 h-4 mr-1" />
-                {userType === 'expert' ? 'Revoke Expert Access' : 'Grant Expert Access'}
+                <GraduationCap className="mr-1 h-4 w-4" />
+                {userType === 'expert'
+                  ? 'Revoke Expert Access'
+                  : 'Grant Expert Access'}
               </Button>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 text-sm">
-          <div className="p-3 rounded-xl bg-gray-50">
-            <p className="text-gray-400 text-xs">Farm Size</p>
-            <p className="font-medium">{targetUser.farmSize || '—'}</p>
+        <div className="mt-6 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Farm Size
+            </p>
+            <p className="mt-0.5 font-medium text-slate-800 dark:text-slate-100">
+              {targetUser.farmSize || '—'}
+            </p>
           </div>
-          <div className="p-3 rounded-xl bg-gray-50">
-            <p className="text-gray-400 text-xs">Specialization</p>
-            <p className="font-medium">{targetUser.specialization || '—'}</p>
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Specialization
+            </p>
+            <p className="mt-0.5 font-medium text-slate-800 dark:text-slate-100">
+              {targetUser.specialization || '—'}
+            </p>
           </div>
-          <div className="p-3 rounded-xl bg-gray-50">
-            <p className="text-gray-400 text-xs">Experience</p>
-            <p className="font-medium">{targetUser.experience || '—'}</p>
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Experience
+            </p>
+            <p className="mt-0.5 font-medium text-slate-800 dark:text-slate-100">
+              {targetUser.experience || '—'}
+            </p>
           </div>
         </div>
       </Card>
 
       {/* Fields */}
       <div>
-        <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><Map className="w-5 h-5 text-primary" /> Fields ({farmData.fields.length})</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+          <Map className="h-5 w-5 text-green-600" /> Fields ({farmData.fields.length})
+        </h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {farmData.fields.map((field) => (
             <Card key={field.id}>
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{field.name}</h3>
-                <span className={`badge ${field.status === 'active' ? 'badge-success' : 'badge-warning'} text-xs capitalize`}>{field.status}</span>
+                <h3 className="font-semibold text-slate-900 dark:text-white">
+                  {field.name}
+                </h3>
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ring-1 ring-inset ${
+                    field.status === 'active'
+                      ? 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400'
+                      : 'bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400'
+                  }`}
+                >
+                  {field.status}
+                </span>
               </div>
-              <div className="mt-2 text-sm text-gray-600 space-y-1">
-                <p>Size: {field.size} {field.unit}</p>
+              <div className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                <p>
+                  Size: {field.size} {field.unit}
+                </p>
                 <p>Crop: {field.crop}</p>
                 <p>Soil: {field.soilType}</p>
-                <p>Soil Health: {field.soilHealth}% · Moisture: {field.moisture}%</p>
+                <p>
+                  Soil Health: {field.soilHealth}% · Moisture: {field.moisture}%
+                </p>
               </div>
             </Card>
           ))}
@@ -156,29 +198,55 @@ export default function AdminUserDetail() {
 
       {/* Sensors */}
       <div>
-        <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><Wifi className="w-5 h-5 text-primary" /> Sensors ({farmData.sensors.length})</h2>
-        <Card className="overflow-hidden" noPadding>
+        <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+          <Wifi className="h-5 w-5 text-green-600" /> Sensors ({farmData.sensors.length})
+        </h2>
+        <Card noPadding className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-white/10 dark:bg-white/5">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Battery</th>
+                  {['Name', 'Type', 'Location', 'Status', 'Battery'].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {farmData.sensors.map((sensor) => (
-                  <tr key={sensor.id}>
-                    <td className="px-4 py-2 text-sm">{sensor.name}</td>
-                    <td className="px-4 py-2 text-sm">{sensor.type}</td>
-                    <td className="px-4 py-2 text-sm">{sensor.location}</td>
-                    <td className="px-4 py-2 text-sm">
-                      <span className={`badge ${sensor.status === 'active' ? 'badge-success' : 'badge-warning'} text-xs capitalize`}>{sensor.status}</span>
+                  <tr
+                    key={sensor.id}
+                    className="transition-colors hover:bg-slate-50/60 dark:hover:bg-white/5"
+                  >
+                    <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
+                      {sensor.name}
                     </td>
-                    <td className="px-4 py-2 text-sm flex items-center gap-1"><Battery className="w-3.5 h-3.5" /> {sensor.battery}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
+                      {sensor.type}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
+                      {sensor.location}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ring-1 ring-inset ${
+                          sensor.status === 'active'
+                            ? 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400'
+                            : 'bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400'
+                        }`}
+                      >
+                        {sensor.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                        <Battery className="h-3.5 w-3.5" /> {sensor.battery}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -189,12 +257,16 @@ export default function AdminUserDetail() {
 
       {/* Crops */}
       <div>
-        <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><Sprout className="w-5 h-5 text-primary" /> Crops ({farmData.crops.length})</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+          <Sprout className="h-5 w-5 text-green-600" /> Crops ({farmData.crops.length})
+        </h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {farmData.crops.map((crop) => (
             <Card key={crop.id}>
-              <h3 className="font-semibold">{crop.name}</h3>
-              <div className="mt-2 text-sm text-gray-600 space-y-1">
+              <h3 className="font-semibold text-slate-900 dark:text-white">
+                {crop.name}
+              </h3>
+              <div className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-300">
                 <p>Season: {crop.season}</p>
                 <p>Planted: {crop.plantedOn}</p>
                 <p>Expected Yield: {crop.expectedYield}</p>
@@ -207,13 +279,20 @@ export default function AdminUserDetail() {
 
       {/* Activities */}
       <div>
-        <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><Activity className="w-5 h-5 text-primary" /> Recent Activity</h2>
+        <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+          <Activity className="h-5 w-5 text-green-600" /> Recent Activity
+        </h2>
         <Card>
           <div className="space-y-3">
             {farmData.activities.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between text-sm border-b last:border-0 pb-2 last:pb-0">
-                <span>{activity.description}</span>
-                <span className="text-gray-400">{activity.timestamp}</span>
+              <div
+                key={activity.id}
+                className="flex items-center justify-between border-b border-slate-100 pb-3 text-sm last:border-0 last:pb-0 dark:border-white/10"
+              >
+                <span className="text-slate-700 dark:text-slate-200">
+                  {activity.description}
+                </span>
+                <span className="text-xs text-slate-400">{activity.timestamp}</span>
               </div>
             ))}
           </div>
