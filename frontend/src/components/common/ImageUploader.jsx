@@ -1,24 +1,10 @@
 import { useRef, useState } from 'react'
-import { Upload, X, Loader2, ImagePlus, Link2 } from 'lucide-react'
+import { Upload, X, Loader2, ImagePlus, Link2, CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { mediaAPI } from '../../services/api'
 import { UPLOAD_MAX_BYTES, UPLOAD_ACCEPTED_TYPES } from '../../utils/constants'
 import { getApiErrorMessage } from '../../utils/apiError'
 
-/**
- * Pick images from the device and upload them to marketplace-service, which
- * returns a ready-to-use public URL. Sellers no longer need to host an image
- * somewhere else and paste a link.
- *
- * Props:
- *   value        string (single) | string[] (multiple) — current image URL(s)
- *   onChange     (next) => void — same shape as `value`
- *   multiple     allow a gallery (default false)
- *   max          max images when multiple (default 6)
- *   folder       'products' | 'stores' | 'payments' | 'misc'
- *   label        field label
- *   allowUrl     also let the user paste a URL manually (default true)
- */
 export default function ImageUploader({
   value,
   onChange,
@@ -37,11 +23,15 @@ export default function ImageUploader({
   const [urlDraft, setUrlDraft] = useState('')
 
   const urls = multiple
-    ? (Array.isArray(value) ? value.filter(Boolean) : [])
-    : (value ? [value] : [])
+    ? Array.isArray(value)
+      ? value.filter(Boolean)
+      : []
+    : value
+    ? [value]
+    : []
 
   const emit = (nextUrls) => {
-    onChange(multiple ? nextUrls : (nextUrls[0] || ''))
+    onChange(multiple ? nextUrls : nextUrls[0] || '')
   }
 
   const validate = (files) => {
@@ -88,7 +78,9 @@ export default function ImageUploader({
       } else {
         const res = await mediaAPI.uploadMultiple(selected, folder, onProgress)
         const data = res.data?.data ?? res.data ?? []
-        uploaded = (Array.isArray(data) ? data : []).map((d) => d.url).filter(Boolean)
+        uploaded = (Array.isArray(data) ? data : [])
+          .map((d) => d.url)
+          .filter(Boolean)
       }
 
       if (!uploaded.length) {
@@ -97,7 +89,11 @@ export default function ImageUploader({
       }
 
       emit(multiple ? [...urls, ...uploaded] : uploaded)
-      toast.success(uploaded.length > 1 ? `${uploaded.length} images uploaded` : 'Image uploaded')
+      toast.success(
+        uploaded.length > 1
+          ? `${uploaded.length} images uploaded`
+          : 'Image uploaded'
+      )
     } catch (err) {
       toast.error(
         getApiErrorMessage(err, {
@@ -132,48 +128,54 @@ export default function ImageUploader({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {label}
+        </label>
         {allowUrl && (
           <button
             type="button"
             disabled={busy}
             onClick={() => setShowUrlInput((v) => !v)}
-            className="text-xs text-gray-400 hover:text-primary flex items-center gap-1 disabled:opacity-50"
+            className="flex items-center gap-1 text-xs font-medium text-slate-400 transition-colors hover:text-green-600 disabled:opacity-50"
           >
-            <Link2 size={12} /> {showUrlInput ? 'Hide URL field' : 'Use a URL instead'}
+            <Link2 size={12} />
+            {showUrlInput ? 'Hide URL field' : 'Use a URL instead'}
           </button>
         )}
       </div>
 
       {/* Existing images */}
       {urls.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="mt-3 flex flex-wrap gap-2.5">
           {urls.map((url, i) => (
             <div
               key={`${url}-${i}`}
-              className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 group"
+              className="group relative h-24 w-24 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-white/5"
             >
               <img
                 src={url}
                 alt={`Upload ${i + 1}`}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none'
                 }}
               />
+
               {i === 0 && multiple && (
-                <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] text-center py-0.5">
+                <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-black/80 to-transparent py-1 text-[10px] font-semibold text-white">
+                  <CheckCircle2 size={10} />
                   Cover
                 </span>
               )}
+
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => removeAt(i)}
-                className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-white/90 text-danger shadow hover:bg-white disabled:opacity-50"
+                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 text-red-600 opacity-0 shadow-md transition-all hover:scale-110 hover:bg-white group-hover:opacity-100 disabled:opacity-50"
                 title="Remove"
               >
-                <X size={12} />
+                <X size={13} />
               </button>
             </div>
           ))}
@@ -194,35 +196,43 @@ export default function ImageUploader({
             if (!busy) handleFiles(e.dataTransfer.files)
           }}
           onClick={() => !busy && inputRef.current?.click()}
-          className={`mt-2 flex flex-col items-center justify-center gap-1 px-4 py-5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
-            dragging
-              ? 'border-primary bg-primary/5'
-              : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
-          } ${busy ? 'opacity-60 cursor-not-allowed' : ''}`}
+          className={`
+            mt-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-7 transition-all
+            ${
+              dragging
+                ? 'border-green-500 bg-green-50/60 dark:bg-green-500/10'
+                : 'border-slate-200 bg-slate-50/40 hover:border-green-400 hover:bg-green-50/40 dark:border-white/10 dark:bg-white/5 dark:hover:border-green-500/50 dark:hover:bg-green-500/5'
+            }
+            ${busy ? 'cursor-not-allowed opacity-60' : ''}
+          `}
         >
           {uploading ? (
             <>
-              <Loader2 size={20} className="text-primary animate-spin" />
-              <p className="text-xs text-gray-500">Uploading… {progress}%</p>
-              <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
+              <Loader2 size={22} className="animate-spin text-green-600" />
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                Uploading… {progress}%
+              </p>
+              <div className="h-1.5 w-40 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
                 <div
-                  className="h-full bg-primary transition-all"
+                  className="h-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all"
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </>
           ) : (
             <>
-              {urls.length ? (
-                <ImagePlus size={20} className="text-gray-400" />
-              ) : (
-                <Upload size={20} className="text-gray-400" />
-              )}
-              <p className="text-xs text-gray-600 font-medium">
-                Click to choose {multiple ? 'images' : 'an image'} or drag &amp; drop
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-100 dark:bg-white/10 dark:ring-white/10">
+                {urls.length ? (
+                  <ImagePlus size={18} className="text-slate-400" />
+                ) : (
+                  <Upload size={18} className="text-slate-400" />
+                )}
+              </div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Click to upload {multiple ? 'images' : 'an image'}
               </p>
-              <p className="text-[11px] text-gray-400">
-                JPG, PNG, WEBP or GIF · up to 5 MB
+              <p className="text-[11px] text-slate-400">
+                or drag &amp; drop · JPG, PNG, WEBP or GIF · up to 5 MB
                 {multiple ? ` · ${urls.length}/${max} added` : ''}
               </p>
             </>
@@ -240,10 +250,10 @@ export default function ImageUploader({
       />
 
       {showUrlInput && (
-        <div className="flex gap-2 mt-2">
+        <div className="mt-3 flex gap-2">
           <input
             type="url"
-            className="input-field flex-1"
+            className="flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
             placeholder="https://example.com/photo.jpg"
             value={urlDraft}
             disabled={busy}
@@ -259,7 +269,7 @@ export default function ImageUploader({
             type="button"
             disabled={busy}
             onClick={addUrl}
-            className="px-3 py-2 text-sm rounded-lg border border-gray-200 hover:border-primary hover:text-primary disabled:opacity-50"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-green-500 hover:text-green-600 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
           >
             Add
           </button>
