@@ -64,38 +64,59 @@ export default function Sidebar() {
 
   const content = (
     <>
-      <div className="p-4 flex items-center justify-between border-b border-white/10">
-        <div className={`flex items-center gap-2 overflow-hidden ${collapsed ? 'lg:justify-center lg:w-full' : ''}`}>
-          <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+      {/* Logo / Header */}
+      <div className="flex items-center justify-between border-b border-white/10 p-4">
+        <div
+          className={`flex items-center gap-2.5 overflow-hidden ${
+            collapsed ? 'lg:w-full lg:justify-center' : ''
+          }`}
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20 backdrop-blur">
             <Leaf size={20} />
           </div>
-          <h1 className={`font-bold text-lg tracking-tight whitespace-nowrap ${collapsed ? 'lg:hidden' : ''}`}>
-            AgroBazaar
-          </h1>
+          <div className={`whitespace-nowrap ${collapsed ? 'lg:hidden' : ''}`}>
+            <h1 className="text-base font-bold leading-tight tracking-tight">
+              AgroBazaar
+            </h1>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-white/50">
+              IoT Smart Farming
+            </p>
+          </div>
         </div>
+
         <button
           onClick={toggleSidebar}
-          className="hidden lg:flex p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+          className="hidden rounded-lg p-1.5 transition-colors hover:bg-white/10 lg:flex"
+          title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
           {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
+
         <button
           onClick={closeMobileSidebar}
-          className="lg:hidden p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+          className="rounded-lg p-1.5 transition-colors hover:bg-white/10 lg:hidden"
+          aria-label="Close sidebar"
         >
           <X size={18} />
         </button>
       </div>
 
-      <nav className="flex-1 mt-3 overflow-y-auto pb-4">
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-2 pb-4 pt-3">
         {menuGroups.map((group) => {
           const items = group.items.filter((item) => !(item.adminOnly && !isAdmin))
           if (items.length === 0) return null
+
           return (
-            <div key={group.label} className="mb-2">
-              <p className={`px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-white/45 ${collapsed ? 'lg:hidden' : ''}`}>
+            <div key={group.label} className="mb-3">
+              <p
+                className={`px-3 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-wider text-white/40 ${
+                  collapsed ? 'lg:hidden' : ''
+                }`}
+              >
                 {group.label}
               </p>
+
               {items.map((item) => (
                 <NavLink
                   key={item.path}
@@ -103,10 +124,11 @@ export default function Sidebar() {
                   onClick={closeMobileSidebar}
                   title={collapsed ? item.label : undefined}
                   className={({ isActive }) => `
-                    group relative mx-2 my-0.5 flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                    ${isActive
-                      ? 'bg-white/15 text-white shadow-inner'
-                      : 'text-white/75 hover:bg-white/10 hover:text-white'
+                    group relative mx-1 my-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200
+                    ${
+                      isActive
+                        ? 'bg-white/15 text-white shadow-sm ring-1 ring-white/10'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
                     }
                     ${collapsed ? 'lg:justify-center' : ''}
                   `}
@@ -114,10 +136,16 @@ export default function Sidebar() {
                   {({ isActive }) => (
                     <>
                       {isActive && (
-                        <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-secondary" />
+                        <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-lime-300" />
                       )}
                       <item.icon size={19} className="shrink-0" />
-                      <span className={`text-sm font-medium whitespace-nowrap ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
+                      <span
+                        className={`whitespace-nowrap ${
+                          collapsed ? 'lg:hidden' : ''
+                        }`}
+                      >
+                        {item.label}
+                      </span>
                     </>
                   )}
                 </NavLink>
@@ -127,10 +155,15 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-white/10">
+      {/* Footer */}
+      <div className="border-t border-white/10 p-4">
         <div className={`text-center ${collapsed ? 'lg:hidden' : ''}`}>
-          <p className="text-xs text-white/60">Smart Agriculture &amp; Marketplace</p>
-          <p className="text-[11px] text-white/40 mt-0.5">v2.0.0 &middot; IoT Platform</p>
+          <p className="text-[11px] font-medium text-white/50">
+            IoT Smart Agriculture & Marketplace
+          </p>
+          <p className="mt-0.5 text-[10px] text-white/30">
+            v2.0.0 · Powered by AgroBazaar
+          </p>
         </div>
       </div>
     </>
@@ -141,15 +174,15 @@ export default function Sidebar() {
       {/* Mobile overlay */}
       {mobileSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-fade-in"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity lg:hidden"
           onClick={closeMobileSidebar}
         />
       )}
 
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-50 flex flex-col
-          bg-gradient-to-b from-primary to-primary-dark text-white shadow-xl
+          fixed inset-y-0 left-0 z-50 flex flex-col
+          bg-gradient-to-b from-emerald-700 via-green-700 to-teal-800 text-white shadow-2xl
           transition-all duration-300 ease-in-out
           ${sidebarOpen ? 'lg:w-64' : 'lg:w-[76px]'}
           w-72 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
