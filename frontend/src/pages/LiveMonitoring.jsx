@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import * as Icons from 'lucide-react'
 import { Wifi, WifiOff, AlertTriangle, RadioTower } from 'lucide-react'
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
+import {
+  AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
+} from 'recharts'
 import Card from '../components/common/Card'
 import { useSensorFeed } from '../hooks/useSensorFeed'
 import { sensorDefinitions } from '../utils/constants'
@@ -17,90 +19,175 @@ export default function LiveMonitoring() {
   const { readings, history, isConnected } = useSensorFeed()
   const [selected, setSelected] = useState(sensorDefinitions[0].id)
 
-  const alerts = sensorDefinitions.filter((s) => statusOf(readings[s.id], s.thresholds) !== 'normal')
+  const alerts = sensorDefinitions.filter(
+    (s) => statusOf(readings[s.id], s.thresholds) !== 'normal'
+  )
   const activeSensor = sensorDefinitions.find((s) => s.id === selected)
   const ActiveIcon = Icons[activeSensor.icon] || Icons.Activity
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Live Monitoring</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">Streaming sensor data updated every few seconds</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+            Live Monitoring
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+            Streaming sensor data updated every few seconds
+          </p>
         </div>
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full w-fit ${isConnected ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-          {isConnected ? <Wifi size={15} /> : <WifiOff size={15} />}
-          <span className="text-sm font-medium">{isConnected ? 'Connected to gateway' : 'Reconnecting...'}</span>
+        <div
+          className={`inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold ring-1 ring-inset ${
+            isConnected
+              ? 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400'
+              : 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400'
+          }`}
+        >
+          {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
+          {isConnected ? 'Connected to gateway' : 'Reconnecting...'}
         </div>
       </div>
 
+      {/* Alerts */}
       {alerts.length > 0 && (
-        <Card className="border-warning/40 bg-warning/5">
+        <Card className="border-amber-200 bg-amber-50/60 dark:border-amber-500/20 dark:bg-amber-500/5">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="text-warning shrink-0 mt-0.5" size={20} />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+              <AlertTriangle size={18} />
+            </div>
             <div>
-              <p className="font-semibold text-sm">{alerts.length} sensor{alerts.length > 1 ? 's' : ''} outside optimal range</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {alerts.map((a) => a.name).join(', ')} {alerts.length > 1 ? 'need' : 'needs'} attention.
+              <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                {alerts.length} sensor{alerts.length > 1 ? 's' : ''} outside
+                optimal range
+              </p>
+              <p className="mt-1 text-sm text-amber-800/80 dark:text-amber-300/80">
+                {alerts.map((a) => a.name).join(', ')}{' '}
+                {alerts.length > 1 ? 'need' : 'needs'} attention.
               </p>
             </div>
           </div>
         </Card>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Sensor Grid */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {sensorDefinitions.map((sensor) => {
           const Icon = Icons[sensor.icon] || Icons.Activity
           const status = statusOf(readings[sensor.id], sensor.thresholds)
           const isActive = selected === sensor.id
+
           return (
             <button
               key={sensor.id}
               onClick={() => setSelected(sensor.id)}
-              className={`card !p-3 text-left transition-all ${isActive ? 'ring-2 ring-primary' : 'card-hover'}`}
+              className={`group rounded-2xl border bg-white p-3.5 text-left shadow-sm transition-all dark:bg-[#142019] ${
+                isActive
+                  ? 'border-green-500 ring-4 ring-green-500/10'
+                  : 'border-slate-200 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:hover:border-white/20'
+              }`}
             >
               <div className="flex items-center justify-between">
-                <Icon size={18} style={{ color: sensor.color }} />
-                <span className={`w-1.5 h-1.5 rounded-full ${status === 'normal' ? 'bg-success' : status === 'low' ? 'bg-warning' : 'bg-danger'}`} />
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-inset"
+                  style={{
+                    backgroundColor: `${sensor.color}1a`,
+                    color: sensor.color,
+                  }}
+                >
+                  <Icon size={16} />
+                </div>
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    status === 'normal'
+                      ? 'bg-green-500'
+                      : status === 'low'
+                        ? 'bg-amber-500'
+                        : 'bg-red-500'
+                  }`}
+                />
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate">{sensor.name}</p>
-              <p className="text-lg font-bold">{readings[sensor.id]}<span className="text-xs font-normal text-gray-400 ml-0.5">{sensor.unit}</span></p>
+              <p className="mt-2.5 truncate text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {sensor.name}
+              </p>
+              <p className="mt-0.5 text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                {readings[sensor.id]}
+                <span className="ml-0.5 text-xs font-medium text-slate-400">
+                  {sensor.unit}
+                </span>
+              </p>
             </button>
           )
         })}
       </div>
 
+      {/* Main Chart */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${activeSensor.color}1a`, color: activeSensor.color }}>
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-inset"
+              style={{
+                backgroundColor: `${activeSensor.color}1a`,
+                color: activeSensor.color,
+              }}
+            >
               <ActiveIcon size={20} />
             </div>
             <div>
-              <h3 className="font-semibold">{activeSensor.name}</h3>
-              <p className="text-xs text-gray-400">{activeSensor.module}</p>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                {activeSensor.name}
+              </h3>
+              <p className="text-xs text-slate-400">{activeSensor.module}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <RadioTower size={13} /> live feed
+          <div className="flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 ring-1 ring-inset ring-slate-200 dark:bg-white/5 dark:text-slate-400 dark:ring-white/10">
+            <RadioTower size={13} />
+            Live feed
           </div>
         </div>
+
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={history[selected] || []}>
             <defs>
               <linearGradient id="liveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={activeSensor.color} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={activeSensor.color} stopOpacity={0} />
+                <stop
+                  offset="0%"
+                  stopColor={activeSensor.color}
+                  stopOpacity={0.4}
+                />
+                <stop
+                  offset="100%"
+                  stopColor={activeSensor.color}
+                  stopOpacity={0}
+                />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="currentColor"
+              opacity={0.1}
+            />
             <XAxis dataKey="time" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} domain={[activeSensor.min, activeSensor.max]} />
+            <YAxis
+              tick={{ fontSize: 11 }}
+              domain={[activeSensor.min, activeSensor.max]}
+            />
             <Tooltip />
-            <Area type="monotone" dataKey="value" stroke={activeSensor.color} strokeWidth={2} fill="url(#liveGrad)" isAnimationActive={false} />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={activeSensor.color}
+              strokeWidth={2}
+              fill="url(#liveGrad)"
+              isAnimationActive={false}
+            />
           </AreaChart>
         </ResponsiveContainer>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{activeSensor.description}</p>
+
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          {activeSensor.description}
+        </p>
       </Card>
     </div>
   )
