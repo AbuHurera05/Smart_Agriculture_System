@@ -14,12 +14,19 @@ import { useAuthContext } from '../context/AuthContext'
 import { marketplaceAdminAPI } from '../services/api'
 
 const getErrorMessage = (error, fallback) =>
-  error.response?.data?.message || error.response?.data?.error || error.message || fallback
+  error.response?.data?.message ||
+  error.response?.data?.error ||
+  error.message ||
+  fallback
 
 export default function AdminPanel() {
   const navigate = useNavigate()
   const {
-    users, fetchUsers, adminAddUser, adminUpdateUser, adminDeleteUser,
+    users,
+    fetchUsers,
+    adminAddUser,
+    adminUpdateUser,
+    adminDeleteUser,
   } = useAuthContext()
 
   const [activeTab, setActiveTab] = useState('overview')
@@ -32,21 +39,14 @@ export default function AdminPanel() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // `users` lives in AuthContext and is backed by the real backend
-  // (GET /admin/users) - load it once when the panel mounts.
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       setUsersLoading(true)
       await fetchUsers()
       setUsersLoading(false)
     })()
   }, [fetchUsers])
 
-  // Data States (sensors & crops are still frontend-only reference data -
-  // the backend has no admin CRUD endpoints for them yet, only read-only
-  // GET /crops and a single-reading GET /iot/sensors. Per-user farm data
-  // lives in the individual User Detail view, also still mocked for the
-  // same reason.)
   const [sensors, setSensors] = useState([
     { id: 1, name: 'Field Sensor A1', type: 'Soil Moisture', location: 'North Field', status: 'active', battery: '85%', lastReading: '2026-07-27 10:30', value: '65%' },
     { id: 2, name: 'Weather Station', type: 'Weather', location: 'Central', status: 'active', battery: '92%', lastReading: '2026-07-27 10:28', value: '28°C' },
@@ -59,22 +59,26 @@ export default function AdminPanel() {
     { id: 3, name: 'Maize', season: 'Kharif', duration: '90 days', waterReq: 'Medium', tempRange: '21-27°C', soilType: 'Well-drained loam', yield: '2.8 tons/acre' },
   ])
 
-  // Backend UserResponse has `role` (security role: ADMIN/USER) and
-  // `userType` (business role: ADMIN/FARMER/EXPERT). "Farmer" counts and
-  // badges use userType, not role.
   const analytics = {
     totalUsers: users.length,
-    activeSensors: sensors.filter(s => s.status === 'active').length,
-    totalFarms: users.filter(u => (u.userType || '').toUpperCase() === 'FARMER').length,
+    activeSensors: sensors.filter((s) => s.status === 'active').length,
+    totalFarms: users.filter((u) => (u.userType || '').toUpperCase() === 'FARMER').length,
     cropsPlanted: crops.length,
   }
 
   const stats = [
-    { label: 'Total Users', value: analytics.totalUsers, icon: Users, change: '+12%', color: 'text-blue-600' },
-    { label: 'Active Sensors', value: analytics.activeSensors, icon: Activity, change: '+5%', color: 'text-green-600' },
-    { label: 'Total Farmers', value: analytics.totalFarms, icon: Map, change: '+8%', color: 'text-purple-600' },
-    { label: 'Crops Tracked', value: analytics.cropsPlanted, icon: Sprout, change: '+15%', color: 'text-orange-600' },
+    { label: 'Total Users', value: analytics.totalUsers, icon: Users, change: '+12%', tone: 'blue' },
+    { label: 'Active Sensors', value: analytics.activeSensors, icon: Activity, change: '+5%', tone: 'green' },
+    { label: 'Total Farmers', value: analytics.totalFarms, icon: Map, change: '+8%', tone: 'purple' },
+    { label: 'Crops Tracked', value: analytics.cropsPlanted, icon: Sprout, change: '+15%', tone: 'orange' },
   ]
+
+  const toneStyles = {
+    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
+    green: 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400',
+    purple: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
+    orange: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400',
+  }
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -86,11 +90,6 @@ export default function AdminPanel() {
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'settings', label: 'System Settings', icon: Settings },
   ]
-
-  // ---------------- Marketplace moderation (real backend data) ----------------
-  // Sellers apply via POST /marketplace/sellers/register (status PENDING) and
-  // products via POST /marketplace/products (status PENDING_APPROVAL) - both
-  // need an admin decision here before they go live. See AdminController.
 
   const [pendingSellers, setPendingSellers] = useState([])
   const [pendingSellersLoaded, setPendingSellersLoaded] = useState(false)
@@ -137,8 +136,11 @@ export default function AdminPanel() {
   const handleSellerAction = async (id, action) => {
     let reason
     if (action === 'reject' || action === 'suspend') {
-      reason = window.prompt(`Reason for ${action === 'reject' ? 'rejecting' : 'suspending'} this seller (shown to them):`) || undefined
-      if (reason === undefined) return // cancelled
+      reason =
+        window.prompt(
+          `Reason for ${action === 'reject' ? 'rejecting' : 'suspending'} this seller (shown to them):`
+        ) || undefined
+      if (reason === undefined) return
     }
     setModerationActionId(id)
     try {
@@ -150,7 +152,11 @@ export default function AdminPanel() {
       }[action]
       const res = await call()
       toast.success(res.data?.message || 'Done')
-      setPendingSellers((prev) => (action === 'approve' || action === 'reject') ? prev.filter((s) => s.id !== id) : prev)
+      setPendingSellers((prev) =>
+        action === 'approve' || action === 'reject'
+          ? prev.filter((s) => s.id !== id)
+          : prev
+      )
       if (action !== 'approve' && action !== 'reject') await loadPendingSellers()
     } catch (err) {
       toast.error(getErrorMessage(err, 'Action failed'))
@@ -162,8 +168,11 @@ export default function AdminPanel() {
   const handleProductAction = async (id, action) => {
     let reason
     if (action === 'reject' || action === 'suspend') {
-      reason = window.prompt(`Reason for ${action === 'reject' ? 'rejecting' : 'suspending'} this product (shown to the seller):`) || undefined
-      if (reason === undefined) return // cancelled
+      reason =
+        window.prompt(
+          `Reason for ${action === 'reject' ? 'rejecting' : 'suspending'} this product (shown to the seller):`
+        ) || undefined
+      if (reason === undefined) return
     }
     setModerationActionId(id)
     try {
@@ -181,8 +190,6 @@ export default function AdminPanel() {
       setModerationActionId(null)
     }
   }
-
-  // ---------------- Generic CRUD (users / sensors / crops) ----------------
 
   const [formData, setFormData] = useState({})
 
@@ -206,22 +213,19 @@ export default function AdminPanel() {
     setLoading(true)
 
     try {
-      // Users are real backend records - adminDeleteUser already shows its
-      // own success/error toast and updates the `users` list on success.
       if (activeTab === 'users') {
         await adminDeleteUser(id)
         return
       }
 
-      // Everything else here is still frontend-only mock/store data.
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       switch (activeTab) {
         case 'sensors':
-          setSensors(prev => prev.filter(s => s.id !== id))
+          setSensors((prev) => prev.filter((s) => s.id !== id))
           break
         case 'crops':
-          setCrops(prev => prev.filter(c => c.id !== id))
+          setCrops((prev) => prev.filter((c) => c.id !== id))
           break
       }
       toast.success('Item deleted successfully')
@@ -237,21 +241,17 @@ export default function AdminPanel() {
     setLoading(true)
 
     try {
-      // Users are real backend records - adminAddUser/adminUpdateUser
-      // already show their own success/error toast, so only close the
-      // modal here and skip the extra toast.
       if (activeTab === 'users') {
         const payload = { ...formData }
 
-        // Don't send a blank password on edit - the backend only requires
-        // one when creating a new user.
         if (modalType === 'edit' && !payload.password) {
           delete payload.password
         }
 
-        const result = modalType === 'add'
-          ? await adminAddUser(payload)
-          : await adminUpdateUser(selectedItem.id, payload)
+        const result =
+          modalType === 'add'
+            ? await adminAddUser(payload)
+            : await adminUpdateUser(selectedItem.id, payload)
 
         if (result.success) {
           setShowModal(false)
@@ -259,19 +259,18 @@ export default function AdminPanel() {
         return
       }
 
-      // Everything else here is still frontend-only mock/store data.
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       if (modalType === 'add') {
         switch (activeTab) {
           case 'sensors': {
-            const newId = Math.max(0, ...sensors.map(s => s.id)) + 1
-            setSensors(prev => [...prev, { ...formData, id: newId }])
+            const newId = Math.max(0, ...sensors.map((s) => s.id)) + 1
+            setSensors((prev) => [...prev, { ...formData, id: newId }])
             break
           }
           case 'crops': {
-            const newId = Math.max(0, ...crops.map(c => c.id)) + 1
-            setCrops(prev => [...prev, { ...formData, id: newId }])
+            const newId = Math.max(0, ...crops.map((c) => c.id)) + 1
+            setCrops((prev) => [...prev, { ...formData, id: newId }])
             break
           }
         }
@@ -279,10 +278,18 @@ export default function AdminPanel() {
       } else {
         switch (activeTab) {
           case 'sensors':
-            setSensors(prev => prev.map(s => s.id === selectedItem.id ? { ...formData, id: selectedItem.id } : s))
+            setSensors((prev) =>
+              prev.map((s) =>
+                s.id === selectedItem.id ? { ...formData, id: selectedItem.id } : s
+              )
+            )
             break
           case 'crops':
-            setCrops(prev => prev.map(c => c.id === selectedItem.id ? { ...formData, id: selectedItem.id } : c))
+            setCrops((prev) =>
+              prev.map((c) =>
+                c.id === selectedItem.id ? { ...formData, id: selectedItem.id } : c
+              )
+            )
             break
         }
         toast.success('Item updated successfully')
@@ -296,9 +303,6 @@ export default function AdminPanel() {
     }
   }
 
-  // Directly grant/revoke a user's expert access - there's no dedicated
-  // backend endpoint for this, so it just updates userType via the same
-  // PUT /admin/users/{id} call the edit form uses.
   const handleToggleExpertAccess = async (targetUser) => {
     const isExpert = (targetUser.userType || '').toUpperCase() === 'EXPERT'
     const nextUserType = isExpert ? 'FARMER' : 'EXPERT'
@@ -327,10 +331,14 @@ export default function AdminPanel() {
 
   const getCurrentData = () => {
     switch (activeTab) {
-      case 'users': return users
-      case 'sensors': return sensors
-      case 'crops': return crops
-      default: return []
+      case 'users':
+        return users
+      case 'sensors':
+        return sensors
+      case 'crops':
+        return crops
+      default:
+        return []
     }
   }
 
@@ -340,8 +348,12 @@ export default function AdminPanel() {
         return [
           { name: 'name', label: 'Full Name', type: 'text', required: true },
           { name: 'email', label: 'Email', type: 'email', required: true },
-          // Only required when creating a new user - AdminUserRequest.password is optional on edit.
-          { name: 'password', label: 'Password', type: 'password', required: modalType === 'add' },
+          {
+            name: 'password',
+            label: 'Password',
+            type: 'password',
+            required: modalType === 'add',
+          },
           { name: 'role', label: 'Security Role', type: 'select', options: ['ADMIN', 'USER'], required: true },
           { name: 'userType', label: 'User Type', type: 'select', options: ['ADMIN', 'FARMER', 'EXPERT'], required: true },
           { name: 'phone', label: 'Phone', type: 'text' },
@@ -361,24 +373,31 @@ export default function AdminPanel() {
           { name: 'duration', label: 'Duration', type: 'text', required: true },
           { name: 'waterReq', label: 'Water Requirement', type: 'text', required: true },
         ]
-      default: return []
+      default:
+        return []
     }
   }
 
   const renderTable = () => {
     const data = getCurrentData()
-    const filteredData = data.filter(item =>
-      Object.values(item).some(val =>
+    const filteredData = data.filter((item) =>
+      Object.values(item).some((val) =>
         val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
       )
     )
-    const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    const paginatedData = filteredData.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    )
 
     if (activeTab === 'users' && usersLoading) {
       return (
-        <div className="p-6 space-y-3">
+        <div className="space-y-3 p-6">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="skeleton h-10 rounded-lg" />
+            <div
+              key={i}
+              className="h-12 animate-pulse rounded-lg bg-slate-100 dark:bg-white/5"
+            />
           ))}
         </div>
       )
@@ -386,30 +405,39 @@ export default function AdminPanel() {
 
     if (data.length === 0) {
       return (
-        <div className="text-center py-12">
-          <Database className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-500">No data available</p>
+        <div className="py-16 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5">
+            <Database className="h-8 w-8 text-slate-400" />
+          </div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            No data available
+          </p>
           <Button variant="primary" className="mt-4" onClick={handleAdd}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Add New
           </Button>
         </div>
       )
     }
 
-    // Columns to actually render per tab (avoid dumping every raw field, e.g. passwords)
     const columnsByTab = {
       users: ['name', 'email', 'role', 'userType'],
       sensors: ['name', 'type', 'location', 'status', 'battery'],
       crops: ['name', 'season', 'duration', 'waterReq'],
     }
-    const columns = columnsByTab[activeTab] || Object.keys(paginatedData[0] || {}).filter(key => key !== 'id')
+    const columns =
+      columnsByTab[activeTab] ||
+      Object.keys(paginatedData[0] || {}).filter((key) => key !== 'id')
 
     if (filteredData.length === 0) {
       return (
-        <div className="text-center py-12">
-          <Search className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500">No results match "{searchTerm}"</p>
+        <div className="py-16 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5">
+            <Search className="h-6 w-6 text-slate-400" />
+          </div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            No results match "{searchTerm}"
+          </p>
         </div>
       )
     }
@@ -417,62 +445,108 @@ export default function AdminPanel() {
     return (
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-white/10 dark:bg-white/5">
             <tr>
-              {columns.map(key => (
-                <th key={key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {columns.map((key) => (
+                <th
+                  key={key}
+                  className="px-6 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                >
                   {key.replace(/([A-Z])/g, ' $1').trim()}
                 </th>
               ))}
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
             {paginatedData.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+              <tr
+                key={item.id}
+                className="transition-colors hover:bg-slate-50/60 dark:hover:bg-white/5"
+              >
                 {columns.map((key) => {
                   const value = item[key]
                   return (
-                    <td key={key} className="px-6 py-4 text-sm text-gray-900">
+                    <td
+                      key={key}
+                      className="px-6 py-4 text-sm text-slate-700 dark:text-slate-200"
+                    >
                       {activeTab === 'users' && key === 'role' ? (
-                        <span className={`badge ${value === 'ADMIN' ? 'badge-danger' : 'badge-info'} text-xs`}>{value}</span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${
+                            value === 'ADMIN'
+                              ? 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400'
+                              : 'bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400'
+                          }`}
+                        >
+                          {value}
+                        </span>
                       ) : activeTab === 'users' && key === 'userType' ? (
-                        <span className={`badge ${value === 'ADMIN' ? 'badge-danger' : value === 'EXPERT' ? 'badge-info' : 'badge-success'} text-xs capitalize`}>{value}</span>
-                      ) : Array.isArray(value) ? value.join(', ') : (value ?? <span className="text-gray-400">—</span>)}
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ring-1 ring-inset ${
+                            value === 'ADMIN'
+                              ? 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400'
+                              : value === 'EXPERT'
+                                ? 'bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400'
+                                : 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400'
+                          }`}
+                        >
+                          {value}
+                        </span>
+                      ) : Array.isArray(value) ? (
+                        value.join(', ')
+                      ) : (
+                        value ?? <span className="text-slate-400">—</span>
+                      )}
                     </td>
                   )
                 })}
-                <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                  {activeTab === 'users' && (
+                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                  <div className="flex items-center justify-end gap-1">
+                    {activeTab === 'users' && (
+                      <button
+                        onClick={() => navigate(`/admin/users/${item.id}`)}
+                        className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+                        title="View complete profile"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    )}
+                    {activeTab === 'users' &&
+                      (item.userType || '').toUpperCase() !== 'ADMIN' && (
+                        <button
+                          onClick={() => handleToggleExpertAccess(item)}
+                          className={`rounded-lg p-1.5 transition-colors ${
+                            (item.userType || '').toUpperCase() === 'EXPERT'
+                              ? 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10'
+                              : 'text-green-500 hover:bg-green-50 dark:hover:bg-green-500/10'
+                          }`}
+                          title={
+                            (item.userType || '').toUpperCase() === 'EXPERT'
+                              ? 'Revoke expert access'
+                              : 'Grant expert access'
+                          }
+                        >
+                          <GraduationCap className="h-4 w-4" />
+                        </button>
+                      )}
                     <button
-                      onClick={() => navigate(`/admin/users/${item.id}`)}
-                      className="text-gray-500 hover:text-gray-900 mr-3"
-                      title="View complete profile"
+                      onClick={() => handleEdit(item)}
+                      className="rounded-lg p-1.5 text-blue-500 transition-colors hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                      title="Edit"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Edit2 className="h-4 w-4" />
                     </button>
-                  )}
-                  {activeTab === 'users' && (item.userType || '').toUpperCase() !== 'ADMIN' && (
                     <button
-                      onClick={() => handleToggleExpertAccess(item)}
-                      className={(item.userType || '').toUpperCase() === 'EXPERT' ? 'text-orange-600 hover:text-orange-800 mr-3' : 'text-green-600 hover:text-green-800 mr-3'}
-                      title={(item.userType || '').toUpperCase() === 'EXPERT' ? 'Revoke expert access' : 'Grant expert access'}
+                      onClick={() => handleDelete(item.id)}
+                      className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+                      title="Delete"
                     >
-                      <GraduationCap className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleEdit(item)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -480,16 +554,18 @@ export default function AdminPanel() {
         </table>
 
         {filteredData.length > itemsPerPage && (
-          <div className="flex justify-between items-center mt-4 px-4 py-3">
-            <div className="text-sm text-gray-700">
-              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} results
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 dark:border-white/10">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, filteredData.length)} of{' '}
+              {filteredData.length} results
             </div>
             <div className="flex gap-2">
               <Button
                 variant="secondary"
                 size="sm"
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => prev - 1)}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
               >
                 Previous
               </Button>
@@ -497,7 +573,7 @@ export default function AdminPanel() {
                 variant="secondary"
                 size="sm"
                 disabled={currentPage === Math.ceil(filteredData.length / itemsPerPage)}
-                onClick={() => setCurrentPage(prev => prev + 1)}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
               >
                 Next
               </Button>
@@ -511,18 +587,22 @@ export default function AdminPanel() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
-          <p className="text-gray-600 mt-1">Complete system management and analytics</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+            Admin Panel
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Complete system management and analytics
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm">
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
           <Button variant="primary" size="sm" onClick={() => fetchUsers()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Sync
           </Button>
         </div>
@@ -530,17 +610,27 @@ export default function AdminPanel() {
 
       {/* Stats Grid */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, idx) => (
             <Card key={idx} hover>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs text-success mt-1">{stat.change}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {stat.label}
+                  </p>
+                  <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {stat.value}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-green-600 dark:text-green-400">
+                    {stat.change}
+                  </p>
                 </div>
-                <div className={`p-3 bg-opacity-10 rounded-full ${stat.color.replace('text', 'bg')}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ring-inset ring-slate-900/5 ${
+                    toneStyles[stat.tone]
+                  }`}
+                >
+                  <stat.icon className="h-6 w-6" />
                 </div>
               </div>
             </Card>
@@ -548,9 +638,9 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-1 overflow-x-auto">
+      {/* Tabs */}
+      <div className="overflow-x-auto border-b border-slate-200 dark:border-white/10">
+        <nav className="-mb-px flex gap-1">
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -559,13 +649,13 @@ export default function AdminPanel() {
                 setCurrentPage(1)
                 setSearchTerm('')
               }}
-              className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-all ${
                 activeTab === item.id
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-green-600 text-green-700 dark:border-green-500 dark:text-green-400'
+                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              <item.icon className="w-4 h-4" />
+              <item.icon className="h-4 w-4" />
               {item.label}
             </button>
           ))}
@@ -575,43 +665,88 @@ export default function AdminPanel() {
       {/* Seller Requests */}
       {activeTab === 'sellerRequests' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">Sellers awaiting approval to start listing on the marketplace.</p>
-            <Button variant="secondary" size="sm" onClick={loadPendingSellers} disabled={pendingSellersLoading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${pendingSellersLoading ? 'animate-spin' : ''}`} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Sellers awaiting approval to start listing on the marketplace.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={loadPendingSellers}
+              disabled={pendingSellersLoading}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${pendingSellersLoading ? 'animate-spin' : ''}`}
+              />
               Refresh
             </Button>
           </div>
 
           {pendingSellersLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5"
+                />
+              ))}
             </div>
           ) : pendingSellers.length === 0 ? (
-            <Card className="text-center py-12">
-              <Store className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500">No pending seller requests</p>
+            <Card className="py-12 text-center">
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5">
+                <Store className="h-8 w-8 text-slate-400" />
+              </div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                No pending seller requests
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                New applications will appear here
+              </p>
             </Card>
           ) : (
             pendingSellers.map((s) => (
               <Card key={s.id}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-gray-900">{s.shopName}</p>
-                      <span className="badge badge-warning text-xs inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</span>
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-slate-900 dark:text-white">
+                        {s.shopName}
+                      </p>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-inset ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400">
+                        <Clock className="h-3 w-3" /> Pending
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-0.5">{s.sellerName} • {s.sellerType?.replaceAll('_', ' ')}</p>
-                    <p className="text-sm text-gray-500">{s.email} {s.phone && `• ${s.phone}`}</p>
-                    {s.location && <p className="text-xs text-gray-400 mt-0.5">{s.location}</p>}
-                    {s.description && <p className="text-sm text-gray-600 mt-2 max-w-xl">{s.description}</p>}
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      {s.sellerName} • {s.sellerType?.replaceAll('_', ' ')}
+                    </p>
+                    <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                      {s.email} {s.phone && `• ${s.phone}`}
+                    </p>
+                    {s.location && (
+                      <p className="mt-1 text-xs text-slate-400">{s.location}</p>
+                    )}
+                    {s.description && (
+                      <p className="mt-2 max-w-xl text-sm text-slate-600 dark:text-slate-300">
+                        {s.description}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button variant="primary" size="sm" loading={moderationActionId === s.id} onClick={() => handleSellerAction(s.id, 'approve')}>
-                      <CheckCircle2 className="w-4 h-4 mr-1" /> Approve
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={moderationActionId === s.id}
+                      onClick={() => handleSellerAction(s.id, 'approve')}
+                    >
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
                     </Button>
-                    <Button variant="secondary" size="sm" disabled={moderationActionId === s.id} onClick={() => handleSellerAction(s.id, 'reject')}>
-                      <XCircle className="w-4 h-4 mr-1" /> Reject
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={moderationActionId === s.id}
+                      onClick={() => handleSellerAction(s.id, 'reject')}
+                    >
+                      <XCircle className="mr-1 h-4 w-4" /> Reject
                     </Button>
                   </div>
                 </div>
@@ -624,42 +759,85 @@ export default function AdminPanel() {
       {/* Product Approvals */}
       {activeTab === 'productApprovals' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">New or edited listings awaiting approval before they go live.</p>
-            <Button variant="secondary" size="sm" onClick={loadPendingProducts} disabled={pendingProductsLoading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${pendingProductsLoading ? 'animate-spin' : ''}`} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              New or edited listings awaiting approval before they go live.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={loadPendingProducts}
+              disabled={pendingProductsLoading}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${pendingProductsLoading ? 'animate-spin' : ''}`}
+              />
               Refresh
             </Button>
           </div>
 
           {pendingProductsLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5"
+                />
+              ))}
             </div>
           ) : pendingProducts.length === 0 ? (
-            <Card className="text-center py-12">
-              <Package className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500">No products waiting for approval</p>
+            <Card className="py-12 text-center">
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5">
+                <Package className="h-8 w-8 text-slate-400" />
+              </div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                No products waiting for approval
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                New listings will appear here
+              </p>
             </Card>
           ) : (
             pendingProducts.map((p) => (
               <Card key={p.id}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-gray-900">{p.title}</p>
-                      <span className="badge badge-warning text-xs inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Pending Approval</span>
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-slate-900 dark:text-white">
+                        {p.title}
+                      </p>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-inset ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400">
+                        <Clock className="h-3 w-3" /> Pending
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-0.5">{p.sellerShopName} • {p.category}</p>
-                    <p className="text-sm text-gray-600 mt-1">Rs. {p.price} / {p.unit} • {p.stock} in stock</p>
-                    {p.description && <p className="text-sm text-gray-600 mt-2 max-w-xl line-clamp-2">{p.description}</p>}
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      {p.sellerShopName} • {p.category}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                      Rs. {p.price} / {p.unit} • {p.stock} in stock
+                    </p>
+                    {p.description && (
+                      <p className="mt-2 line-clamp-2 max-w-xl text-sm text-slate-600 dark:text-slate-300">
+                        {p.description}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button variant="primary" size="sm" loading={moderationActionId === p.id} onClick={() => handleProductAction(p.id, 'approve')}>
-                      <CheckCircle2 className="w-4 h-4 mr-1" /> Approve
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={moderationActionId === p.id}
+                      onClick={() => handleProductAction(p.id, 'approve')}
+                    >
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
                     </Button>
-                    <Button variant="secondary" size="sm" disabled={moderationActionId === p.id} onClick={() => handleProductAction(p.id, 'reject')}>
-                      <XCircle className="w-4 h-4 mr-1" /> Reject
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={moderationActionId === p.id}
+                      onClick={() => handleProductAction(p.id, 'reject')}
+                    >
+                      <XCircle className="mr-1 h-4 w-4" /> Reject
                     </Button>
                   </div>
                 </div>
@@ -669,105 +847,123 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Management Content (users / sensors / crops) */}
+      {/* Management Content */}
       {['users', 'sensors', 'crops'].includes(activeTab) && (
-        <div>
-          {/* Search and Actions Bar */}
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex-1 min-w-[200px] relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="space-y-5">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative min-w-[200px] flex-1">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder={`Search ${activeTab}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field pl-10"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
             <Button variant="primary" onClick={handleAdd}>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Add New
             </Button>
             <Button variant="secondary" disabled title="Coming soon">
-              <Filter className="w-4 h-4 mr-2" />
+              <Filter className="mr-2 h-4 w-4" />
               Filter
             </Button>
             <Button variant="secondary" disabled title="Coming soon">
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className="mr-2 h-4 w-4" />
               Import
             </Button>
           </div>
 
-          {/* Data Table */}
-          <Card className="overflow-hidden" noPadding>
+          <Card noPadding className="overflow-hidden">
             {renderTable()}
           </Card>
         </div>
       )}
 
-      {/* Analytics View */}
+      {/* Analytics */}
       {activeTab === 'analytics' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <h3 className="text-lg font-semibold mb-4">User Growth</h3>
-              <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                <BarChart3 className="w-12 h-12 text-gray-400" />
-                <span className="ml-2 text-gray-500">Chart Component Here</span>
-              </div>
-            </Card>
-            <Card>
-              <h3 className="text-lg font-semibold mb-4">Sensor Activity</h3>
-              <div className="space-y-4">
-                {sensors.map(sensor => (
-                  <div key={sensor.id}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm">{sensor.name}</span>
-                      <span className="text-sm text-gray-500">{sensor.value}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-primary rounded-full h-2 transition-all"
-                        style={{ width: sensor.battery }}
-                      />
-                    </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card>
+            <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">
+              User Growth
+            </h3>
+            <div className="flex h-64 items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5">
+              <BarChart3 className="h-12 w-12 text-slate-300" />
+              <span className="ml-2 text-sm text-slate-500">
+                Chart Component Here
+              </span>
+            </div>
+          </Card>
+          <Card>
+            <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">
+              Sensor Activity
+            </h3>
+            <div className="space-y-4">
+              {sensors.map((sensor) => (
+                <div key={sensor.id}>
+                  <div className="mb-1.5 flex justify-between">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {sensor.name}
+                    </span>
+                    <span className="text-sm text-slate-500">{sensor.value}</span>
                   </div>
-                ))}
-              </div>
-            </Card>
-          </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500"
+                      style={{ width: sensor.battery }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
 
-      {/* Settings View */}
+      {/* Settings */}
       {activeTab === 'settings' && (
         <Card>
-          <h3 className="text-lg font-semibold mb-4">System Settings</h3>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between py-3 border-b">
+          <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">
+            System Settings
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 py-3 dark:border-white/10">
               <div>
-                <p className="font-medium">Email Notifications</p>
-                <p className="text-sm text-gray-500">Receive email alerts for system events</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  Email Notifications
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Receive email alerts for system events
+                </p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary transition-colors">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-600 transition-colors">
+                <span className="inline-block h-4 w-4 translate-x-6 transform rounded-full bg-white shadow-sm transition-transform" />
               </button>
             </div>
-            <div className="flex items-center justify-between py-3 border-b">
+            <div className="flex items-center justify-between border-b border-slate-100 py-3 dark:border-white/10">
               <div>
-                <p className="font-medium">Auto Backup</p>
-                <p className="text-sm text-gray-500">Automatically backup data daily</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  Auto Backup
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Automatically backup data daily
+                </p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
+              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-200 transition-colors dark:bg-white/10">
+                <span className="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow-sm transition-transform" />
               </button>
             </div>
             <div className="flex items-center justify-between py-3">
               <div>
-                <p className="font-medium">Data Retention Period</p>
-                <p className="text-sm text-gray-500">Keep historical data for</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  Data Retention Period
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Keep historical data for
+                </p>
               </div>
-              <select className="input-field w-32">
+              <select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/10 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
                 <option>30 days</option>
                 <option>90 days</option>
                 <option>1 year</option>
@@ -779,67 +975,89 @@ export default function AdminPanel() {
 
       {/* CRUD Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">
-                  {modalType === 'add' ? 'Add New' : 'Edit'} {activeTab.slice(0, -1)}
-                </h3>
-                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {getFormFields().map(field => (
-                  <div key={field.name}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {field.label} {field.required && '*'}
-                    </label>
-                    {field.type === 'select' ? (
-                      <select
-                        value={formData[field.name] || ''}
-                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                        className="input-field"
-                        required={field.required}
-                      >
-                        <option value="">Select {field.label}</option>
-                        {field.options.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    ) : field.type === 'textarea' ? (
-                      <textarea
-                        value={formData[field.name] || ''}
-                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                        className="input-field"
-                        rows={4}
-                        required={field.required}
-                      />
-                    ) : (
-                      <input
-                        type={field.type}
-                        value={formData[field.name] || ''}
-                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                        className="input-field"
-                        required={field.required}
-                        placeholder={field.name === 'password' && modalType === 'edit' ? 'Leave blank to keep current password' : undefined}
-                      />
-                    )}
-                  </div>
-                ))}
-
-                <div className="flex gap-3 pt-4">
-                  <Button type="submit" variant="primary" className="flex-1" loading={loading}>
-                    {modalType === 'add' ? 'Create' : 'Update'}
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </form>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5 dark:bg-[#142019]">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
+              <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                {modalType === 'add' ? 'Add New' : 'Edit'} {activeTab.slice(0, -1)}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-5"
+            >
+              {getFormFields().map((field) => (
+                <div key={field.name}>
+                  <label className="mb-1.5 block text-[13px] font-semibold text-slate-700 dark:text-slate-200">
+                    {field.label}{' '}
+                    {field.required && <span className="text-red-500">*</span>}
+                  </label>
+                  {field.type === 'select' ? (
+                    <select
+                      value={formData[field.name] || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [field.name]: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-900 outline-none transition-all focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                      required={field.required}
+                    >
+                      <option value="">Select {field.label}</option>
+                      {field.options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type}
+                      value={formData[field.name] || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [field.name]: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                      required={field.required}
+                      placeholder={
+                        field.name === 'password' && modalType === 'edit'
+                          ? 'Leave blank to keep current password'
+                          : undefined
+                      }
+                    />
+                  )}
+                </div>
+              ))}
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="flex-1"
+                  loading={loading}
+                >
+                  {modalType === 'add' ? 'Create' : 'Update'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
