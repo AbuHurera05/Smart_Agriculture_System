@@ -1,149 +1,3 @@
-// import { Star, ShoppingCart, BadgeCheck, Leaf, Heart, Zap } from 'lucide-react'
-// import { motion } from 'framer-motion'
-// import { formatPKR } from '../../utils/format'
-
-// function StarRating({ rating = 0 }) {
-//   const rounded = Math.round(rating)
-//   return (
-//     <div className="flex items-center">
-//       {[1, 2, 3, 4, 5].map((i) => (
-//         <Star
-//           key={i}
-//           size={12}
-//           className={i <= rounded ? 'text-secondary-dark fill-[#ffb703]' : 'text-gray-300 fill-gray-200'}
-//         />
-//       ))}
-//     </div>
-//   )
-// }
-
-// export default function ProductCard({ product, onAddToCart, onBuyNow, onView, isWishlisted, onToggleWishlist }) {
-//   const outOfStock = product.stock <= 0
-//   const hasDiscount = product.originalPrice && product.originalPrice > product.price
-//   const discountPct = hasDiscount
-//     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-//     : 0
-
-//   return (
-//     <motion.div
-//       initial={{ opacity: 0, y: 16 }}
-//       animate={{ opacity: 1, y: 0 }}
-//       whileHover={{ y: -4 }}
-//       transition={{ duration: 0.25 }}
-//       className="card flex flex-col overflow-hidden !p-0 group"
-//     >
-//       <button
-//         onClick={() => onView?.(product)}
-//         className="relative h-40 w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-6xl overflow-hidden"
-//       >
-//         <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
-//           {hasDiscount && (
-//             <span className="bg-danger text-white text-[11px] font-bold px-2 py-0.5 rounded">-{discountPct}%</span>
-//           )}
-//           {product.organic && (
-//             <span className="badge badge-success flex items-center gap-1 !py-0.5">
-//               <Leaf size={11} /> Organic
-//             </span>
-//           )}
-//         </div>
-
-//         {onToggleWishlist && (
-//           <span
-//             role="button"
-//             tabIndex={0}
-//             onClick={(e) => { e.stopPropagation(); onToggleWishlist(product) }}
-//             onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onToggleWishlist(product) } }}
-//             className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 shadow-sm hover:bg-white transition-colors z-10"
-//             title="Save to wishlist"
-//           >
-//             <Heart size={15} className={isWishlisted ? 'fill-danger text-danger' : 'text-gray-400'} />
-//           </span>
-//         )}
-
-//         {product.imageUrl ? (
-//           <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
-//         ) : (
-//           product.image
-//         )}
-
-//         {outOfStock && (
-//           <span className="absolute inset-0 bg-black/50 text-white flex items-center justify-center text-sm font-semibold">
-//             Out of Stock
-//           </span>
-//         )}
-//       </button>
-
-//       <div className="p-3.5 flex-1 flex flex-col">
-//         <button
-//           onClick={() => onView?.(product)}
-//           className="text-left font-semibold text-gray-800 hover:text-primary transition-colors line-clamp-2 text-sm leading-snug min-h-[2.5em]"
-//         >
-//           {product.title}
-//         </button>
-
-//         <div className="flex items-center gap-1.5 mt-1.5 text-xs">
-//           <StarRating rating={product.rating} />
-//           <span className="text-gray-400">({product.reviewsCount ?? 0})</span>
-//           {product.negotiable && (
-//             <span className="text-info flex items-center gap-0.5 ml-auto shrink-0">
-//               <Zap size={11} /> Negotiable
-//             </span>
-//           )}
-//         </div>
-
-//         <p className="text-[11px] text-gray-500 mt-1 flex items-center gap-0.5 line-clamp-1">
-//           {product.sellerName || 'SmartAgri Seller'}
-//           {product.sellerVerified && <BadgeCheck size={11} className="text-info shrink-0" />}
-//           {product.sellerLocation && (
-//             <>
-//               <span className="text-gray-300">•</span>
-//               {product.sellerLocation}
-//             </>
-//           )}
-//         </p>
-
-//         {product.category && (
-//           <span className="mt-1.5 self-start capitalize text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-//             {product.category}
-//           </span>
-//         )}
-
-//         <div className="mt-2.5 flex items-baseline gap-1.5 flex-wrap">
-//           <p className="text-lg font-bold text-primary">{formatPKR(product.price)}</p>
-//           {hasDiscount && (
-//             <p className="text-xs text-gray-400 line-through">{formatPKR(product.originalPrice)}</p>
-//           )}
-//           <span className="text-[11px] font-normal text-gray-500">/ {product.unit}</span>
-//         </div>
-//         <p className={`text-[11px] ${outOfStock ? 'text-danger font-medium' : 'text-gray-400'}`}>
-//           {outOfStock
-//             ? 'Out of Stock'
-//             : `Stock: ${product.stock} ${product.unit || ''} available`}
-//         </p>
-
-//         <div className="mt-3 grid grid-cols-2 gap-2">
-//           <button
-//             disabled={outOfStock}
-//             onClick={() => onAddToCart?.(product)}
-//             className="flex items-center justify-center gap-1.5 py-2 rounded-lg border border-primary text-primary text-xs sm:text-sm font-medium hover:bg-primary/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
-//           >
-//             <ShoppingCart size={15} /> Add to Cart
-//           </button>
-
-//           <button
-//             disabled={outOfStock}
-//             onClick={() => (onBuyNow ? onBuyNow(product) : onView?.(product))}
-//             className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-//           >
-//             <Zap size={15} /> Buy Now
-//           </button>
-//         </div>
-//       </div>
-//     </motion.div>
-//   )
-// }
-
-
 import { Star, ShoppingCart, BadgeCheck, Leaf, Heart, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatPKR } from '../../utils/format'
@@ -152,23 +6,37 @@ import { categoryLabel } from '../../utils/constants'
 function StarRating({ rating = 0 }) {
   const rounded = Math.round(rating)
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
           size={12}
-          className={i <= rounded ? 'text-secondary-dark fill-[#ffb703]' : 'text-gray-300 fill-gray-200'}
+          className={
+            i <= rounded
+              ? 'fill-amber-400 text-amber-400'
+              : 'fill-slate-200 text-slate-200 dark:fill-white/10 dark:text-white/10'
+          }
         />
       ))}
     </div>
   )
 }
 
-export default function ProductCard({ product, onAddToCart, onBuyNow, onView, isWishlisted, onToggleWishlist }) {
+export default function ProductCard({
+  product,
+  onAddToCart,
+  onBuyNow,
+  onView,
+  isWishlisted,
+  onToggleWishlist,
+}) {
   const outOfStock = product.stock <= 0
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price
+  const hasDiscount =
+    product.originalPrice && product.originalPrice > product.price
   const discountPct = hasDiscount
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100
+      )
     : 0
 
   return (
@@ -176,113 +44,165 @@ export default function ProductCard({ product, onAddToCart, onBuyNow, onView, is
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
-      transition={{ duration: 0.25 }}
-      className="card flex flex-col overflow-hidden !p-0 group"
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 dark:border-white/10 dark:bg-[#142019] dark:hover:border-white/20"
     >
+      {/* Image */}
       <button
         onClick={() => onView?.(product)}
-        className="relative h-40 w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-6xl overflow-hidden"
+        className="relative flex h-44 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-green-50 to-emerald-50 text-6xl dark:from-white/5 dark:to-white/5"
       >
-        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+        {/* Badges */}
+        <div className="absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
           {hasDiscount && (
-            <span className="bg-danger text-white text-[11px] font-bold px-2 py-0.5 rounded">-{discountPct}%</span>
+            <span className="rounded-full bg-red-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
+              -{discountPct}%
+            </span>
           )}
           {product.organic && (
-            <span className="badge badge-success flex items-center gap-1 !py-0.5">
-              <Leaf size={11} /> Organic
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
+              <Leaf size={10} /> Organic
             </span>
           )}
         </div>
 
+        {/* Wishlist */}
         {onToggleWishlist && (
           <span
             role="button"
             tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); onToggleWishlist(product) }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onToggleWishlist(product) } }}
-            className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 shadow-sm hover:bg-white transition-colors z-10"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleWishlist(product)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.stopPropagation()
+                onToggleWishlist(product)
+              }
+            }}
+            className="absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-md backdrop-blur transition-all hover:scale-110 hover:bg-white dark:bg-slate-900/90"
             title="Save to wishlist"
           >
-            <Heart size={15} className={isWishlisted ? 'fill-danger text-danger' : 'text-gray-400'} />
+            <Heart
+              size={15}
+              className={
+                isWishlisted
+                  ? 'fill-red-500 text-red-500'
+                  : 'text-slate-400'
+              }
+            />
           </span>
         )}
 
+        {/* Image */}
         {product.imageUrl ? (
-          <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
+          <img
+            src={product.imageUrl}
+            alt={product.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
         ) : (
           product.image
         )}
 
+        {/* Out of stock overlay */}
         {outOfStock && (
-          <span className="absolute inset-0 bg-black/50 text-white flex items-center justify-center text-sm font-semibold">
+          <span className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm">
             Out of Stock
           </span>
         )}
       </button>
 
-      <div className="p-3.5 flex-1 flex flex-col">
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-4">
+        {/* Title */}
         <button
           onClick={() => onView?.(product)}
-          className="text-left font-semibold text-gray-800 hover:text-primary transition-colors line-clamp-2 text-sm leading-snug min-h-[2.5em]"
+          className="line-clamp-2 min-h-[2.5em] text-left text-sm font-semibold leading-snug text-slate-800 transition-colors hover:text-green-600 dark:text-slate-100"
         >
           {product.title}
         </button>
 
-        <div className="flex items-center gap-1.5 mt-1.5 text-xs">
+        {/* Rating */}
+        <div className="mt-2 flex items-center gap-1.5 text-xs">
           <StarRating rating={product.rating} />
-          <span className="text-gray-400">({product.reviewsCount ?? 0})</span>
+          <span className="text-slate-400">
+            ({product.reviewsCount ?? 0})
+          </span>
           {product.negotiable && (
-            <span className="text-info flex items-center gap-0.5 ml-auto shrink-0">
-              <Zap size={11} /> Negotiable
+            <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+              <Zap size={10} /> Negotiable
             </span>
           )}
         </div>
 
-        <p className="text-[11px] text-gray-500 mt-1 flex items-center gap-0.5 line-clamp-1">
-          {product.sellerName || 'SmartAgri Seller'}
-          {product.sellerVerified && <BadgeCheck size={11} className="text-info shrink-0" />}
+        {/* Seller */}
+        <p className="mt-2 flex items-center gap-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
+          <span className="truncate">
+            {product.sellerName || 'SmartAgri Seller'}
+          </span>
+          {product.sellerVerified && (
+            <BadgeCheck size={11} className="shrink-0 text-blue-500" />
+          )}
           {product.sellerLocation && (
             <>
-              <span className="text-gray-300">•</span>
-              {product.sellerLocation}
+              <span className="text-slate-300">•</span>
+              <span className="truncate">{product.sellerLocation}</span>
             </>
           )}
         </p>
 
+        {/* Category */}
         {product.category && (
-          <span className="mt-1.5 self-start text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+          <span className="mt-2 self-start rounded-full bg-green-50 px-2.5 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-500/10 dark:text-green-400">
             {categoryLabel[product.category] || product.category}
           </span>
         )}
 
-        <div className="mt-2.5 flex items-baseline gap-1.5 flex-wrap">
-          <p className="text-lg font-bold text-primary">{formatPKR(product.price)}</p>
+        {/* Price */}
+        <div className="mt-3 flex flex-wrap items-baseline gap-1.5">
+          <p className="text-lg font-bold tracking-tight text-green-600 dark:text-green-400">
+            {formatPKR(product.price)}
+          </p>
           {hasDiscount && (
-            <p className="text-xs text-gray-400 line-through">{formatPKR(product.originalPrice)}</p>
+            <p className="text-xs text-slate-400 line-through">
+              {formatPKR(product.originalPrice)}
+            </p>
           )}
-          <span className="text-[11px] font-normal text-gray-500">/ {product.unit}</span>
+          <span className="text-[11px] font-normal text-slate-500">
+            / {product.unit}
+          </span>
         </div>
-        <p className={`text-[11px] ${outOfStock ? 'text-danger font-medium' : 'text-gray-400'}`}>
+
+        <p
+          className={`text-[11px] font-medium ${
+            outOfStock ? 'text-red-500' : 'text-slate-400'
+          }`}
+        >
           {outOfStock
             ? 'Out of Stock'
             : `Stock: ${product.stock} ${product.unit || ''} available`}
         </p>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        {/* Actions */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             disabled={outOfStock}
             onClick={() => onAddToCart?.(product)}
-            className="flex items-center justify-center gap-1.5 py-2 rounded-lg border border-primary text-primary text-xs sm:text-sm font-medium hover:bg-primary/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-green-500 py-2.5 text-xs font-semibold text-green-600 transition-all hover:bg-green-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:opacity-50 sm:text-sm dark:hover:bg-green-500/10"
           >
-            <ShoppingCart size={15} /> Add to Cart
+            <ShoppingCart size={14} /> Add
           </button>
 
           <button
             disabled={outOfStock}
-            onClick={() => (onBuyNow ? onBuyNow(product) : onView?.(product))}
-            className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={() =>
+              onBuyNow ? onBuyNow(product) : onView?.(product)
+            }
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-green-500 to-green-600 py-2.5 text-xs font-semibold text-white shadow-md shadow-green-600/25 transition-all hover:from-green-600 hover:to-green-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none sm:text-sm"
           >
-            <Zap size={15} /> Buy Now
+            <Zap size={14} /> Buy Now
           </button>
         </div>
       </div>
