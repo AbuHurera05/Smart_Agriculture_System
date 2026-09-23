@@ -10,9 +10,9 @@ function getStatus(value, thresholds) {
 }
 
 const statusStyles = {
-  normal: 'badge-success',
-  low: 'badge-warning',
-  high: 'badge-danger',
+  normal: 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400',
+  low: 'bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400',
+  high: 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400',
 }
 
 const statusLabel = {
@@ -28,38 +28,74 @@ export default function SensorCard({ sensor, value, history = [], onClick }) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="card card-hover cursor-pointer flex flex-col"
+      className="group flex cursor-pointer flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 dark:border-white/10 dark:bg-[#142019] dark:hover:border-white/20"
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div
-            className="p-2.5 rounded-xl"
-            style={{ backgroundColor: `${sensor.color}1a`, color: sensor.color }}
+            className="flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-inset transition-transform group-hover:scale-105"
+            style={{
+              backgroundColor: `${sensor.color}1a`,
+              color: sensor.color,
+              ringColor: `${sensor.color}30`,
+            }}
           >
-            <Icon className="w-5 h-5" />
+            <Icon className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-semibold text-sm">{sensor.name}</p>
-            <p className="text-xs text-gray-400">{sensor.module}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              {sensor.name}
+            </p>
+            <p className="text-[11px] font-medium text-slate-400">
+              {sensor.module}
+            </p>
           </div>
         </div>
-        <span className={`badge ${statusStyles[status]}`}>{statusLabel[status]}</span>
+
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ${statusStyles[status]}`}
+        >
+          {statusLabel[status]}
+        </span>
       </div>
 
-      <div className="flex items-end justify-between mt-4">
-        <p className="text-3xl font-bold tracking-tight">
-          {value}
-          <span className="text-sm font-medium text-gray-400 ml-1">{sensor.unit}</span>
-        </p>
+      <div className="mt-5 flex items-end justify-between">
+        <div>
+          <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {value}
+            <span className="ml-1 text-sm font-medium text-slate-400">
+              {sensor.unit}
+            </span>
+          </p>
+          <p className="mt-0.5 text-[11px] font-medium text-slate-400">
+            Live reading
+          </p>
+        </div>
+
         {history.length > 1 && (
-          <div className="w-24 h-10">
+          <div className="h-11 w-24">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={history}>
                 <defs>
-                  <linearGradient id={`grad-${sensor.id}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={sensor.color} stopOpacity={0.5} />
-                    <stop offset="100%" stopColor={sensor.color} stopOpacity={0} />
+                  <linearGradient
+                    id={`grad-${sensor.id}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor={sensor.color}
+                      stopOpacity={0.5}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={sensor.color}
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <Area
