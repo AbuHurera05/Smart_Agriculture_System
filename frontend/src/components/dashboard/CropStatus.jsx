@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sprout, TrendingUp, AlertTriangle } from 'lucide-react'
+import { Sprout, Calendar, TrendingUp } from 'lucide-react'
 import Card from '../common/Card'
 
 export default function CropStatus() {
@@ -9,42 +9,88 @@ export default function CropStatus() {
     { name: 'Maize', stage: 'Ripening', health: 78, daysToHarvest: 20 },
   ])
 
+  const getHealthStyle = (health) => {
+    if (health > 80) return { badge: 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400', bar: 'bg-gradient-to-r from-green-400 to-emerald-500' }
+    if (health > 60) return { badge: 'bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400', bar: 'bg-gradient-to-r from-amber-400 to-orange-500' }
+    return { badge: 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400', bar: 'bg-gradient-to-r from-red-400 to-rose-500' }
+  }
+
   return (
     <Card>
-      <h3 className="text-lg font-semibold mb-4">Active Crops</h3>
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            Active Crops
+          </h3>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            Currently growing in your farm
+          </p>
+        </div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400">
+          <Sprout size={18} />
+        </div>
+      </div>
+
       <div className="space-y-4">
-        {crops.map((crop, idx) => (
-          <div key={idx} className="border-b border-gray-100 dark:border-white/10 last:border-0 pb-3 last:pb-0">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Sprout className="w-5 h-5 text-primary" />
-                <span className="font-medium">{crop.name}</span>
+        {crops.map((crop, idx) => {
+          const style = getHealthStyle(crop.health)
+          return (
+            <div
+              key={idx}
+              className="rounded-xl border border-slate-100 bg-slate-50/40 p-3.5 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10"
+            >
+              <div className="mb-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-green-600 shadow-sm ring-1 ring-slate-100 dark:bg-white/10 dark:text-green-400 dark:ring-white/10">
+                    <Sprout size={16} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {crop.name}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {crop.stage}
+                    </p>
+                  </div>
+                </div>
+
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ${style.badge}`}
+                >
+                  <TrendingUp size={11} />
+                  {crop.health}%
+                </span>
               </div>
-              <span className={`badge ${
-                crop.health > 80 ? 'badge-success' : 
-                crop.health > 60 ? 'badge-warning' : 'badge-danger'
-              }`}>
-                {crop.health}% Health
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">Stage</p>
-                <p className="font-medium">{crop.stage}</p>
+
+              <div className="mb-2 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Stage
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {crop.stage}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    To Harvest
+                  </p>
+                  <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <Calendar size={11} className="text-slate-400" />
+                    {crop.daysToHarvest} days
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">Days to Harvest</p>
-                <p className="font-medium">{crop.daysToHarvest} days</p>
+
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${style.bar}`}
+                  style={{ width: `${crop.health}%` }}
+                />
               </div>
             </div>
-            <div className="mt-2 w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
-              <div 
-                className="bg-primary rounded-full h-2 transition-all duration-500"
-                style={{ width: `${crop.health}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </Card>
   )
