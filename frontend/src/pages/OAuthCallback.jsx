@@ -4,12 +4,6 @@ import toast from 'react-hot-toast'
 import { Loader2 } from 'lucide-react'
 import { useAuthContext } from '../context/AuthContext'
 
-// Route: /oauth2/redirect
-// The backend's OAuth2 success handler should redirect the browser here
-// after Google/Facebook login completes, e.g.:
-//   https://your-frontend.app/oauth2/redirect?token=...&refreshToken=...
-// On failure it should redirect here with an `error` param instead, e.g.:
-//   https://your-frontend.app/oauth2/redirect?error=oauth_account_exists
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -25,7 +19,9 @@ export default function OAuthCallback() {
     const error = searchParams.get('error')
 
     if (error) {
-      toast.error(decodeURIComponent(error.replace(/\+/g, ' ')) || 'OAuth login failed')
+      toast.error(
+        decodeURIComponent(error.replace(/\+/g, ' ')) || 'OAuth login failed'
+      )
       navigate('/login', { replace: true })
       return
     }
@@ -36,10 +32,34 @@ export default function OAuthCallback() {
   }, [searchParams, navigate, loginWithOAuthToken])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-alt">
-      <div className="flex flex-col items-center gap-3 text-gray-500">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-sm">Finishing sign-in…</p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 dark:bg-night">
+      {/* Background blobs */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-40 -left-40 h-[400px] w-[400px] rounded-full bg-emerald-200/40 blur-3xl dark:bg-emerald-500/10" />
+        <div className="absolute -bottom-40 -right-40 h-[400px] w-[400px] rounded-full bg-teal-200/40 blur-3xl dark:bg-teal-500/10" />
+      </div>
+
+      <div className="relative flex flex-col items-center gap-4 rounded-3xl border border-slate-200/60 bg-white/80 px-10 py-12 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-night-raised/80">
+        <div className="relative">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-600/30">
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
+          </div>
+        </div>
+
+        <div className="text-center">
+          <p className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+            Finishing sign-in
+          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Verifying your account, please wait…
+          </p>
+        </div>
+
+        <div className="flex gap-1">
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-green-500 [animation-delay:-0.3s]" />
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-green-500 [animation-delay:-0.15s]" />
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-green-500" />
+        </div>
       </div>
     </div>
   )
