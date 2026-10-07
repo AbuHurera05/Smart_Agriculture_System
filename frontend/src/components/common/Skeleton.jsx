@@ -18,7 +18,7 @@ export function SkeletonCircle({ size = 40, className = '' }) {
 export function SkeletonCard({ className = '' }) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-[#142019] ${className}`}
+      className={`rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-night-raised ${className}`}
     >
       <div className="flex items-center justify-between">
         <SkeletonLine className="w-1/3" />
@@ -34,7 +34,7 @@ export function SkeletonCard({ className = '' }) {
 
 export function SkeletonTable({ rows = 5, cols = 4 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#142019]">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-night-raised">
       <SkeletonLine className="mb-4 h-5 w-1/4" />
       <div className="mt-2 space-y-3">
         {Array.from({ length: rows }).map((_, r) => (
@@ -55,7 +55,7 @@ export function SkeletonTable({ rows = 5, cols = 4 }) {
 
 export function SkeletonChart({ height = 280 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-[#142019]">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-night-raised">
       <SkeletonLine className="mb-4 h-5 w-1/3" />
       <div
         className="animate-pulse rounded-xl bg-slate-200/80 dark:bg-white/10"

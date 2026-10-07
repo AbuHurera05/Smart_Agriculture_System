@@ -20,7 +20,7 @@ export default function Loader({ size = 'md', fullScreen = false, label }) {
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm dark:bg-[#0e1712]/90">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm dark:bg-night/90">
         {loader}
       </div>
     )
