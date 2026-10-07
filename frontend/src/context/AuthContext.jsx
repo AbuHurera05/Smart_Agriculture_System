@@ -24,11 +24,65 @@ export const useAuthContext = () => {
 // ERROR MESSAGE HELPER
 // =========================================================
 
-const getErrorMessage = (error, fallback) =>
-  error.response?.data?.message ||
-  error.response?.data?.error ||
-  error.message ||
-  fallback
+const getErrorMessage = (error, fallback) => {
+  // No response at all = server down / network problem
+  if (!error.response && error.request) {
+    return 'Unable to reach the server. Please check your connection and try again.'
+  }
+
+  const data = error.response?.data
+
+  // Backend validation errors: { message: 'Validation failed', validationErrors: { field: 'text' } }
+  const fieldErrors =
+    data?.validationErrors && typeof data.validationErrors === 'object'
+      ? Object.values(data.validationErrors).join(', ')
+      : ''
+
+  return fieldErrors || data?.message || data?.error || error.message || fallback
+}
+
+// Login is rejected with 403 when the email has not been verified with an OTP yet
+const isUnverifiedError = (error) =>
+  error.response?.status === 403 &&
+  /not verified/i.test(error.response?.data?.message || '')
+
+// Runs a simple API action (no session change) and reports the result with a toast.
+// Intentionally does NOT touch the global `loading` flag, so the Login page is never
+// unmounted while the user is typing an OTP.
+// options.silentSuccess / options.silentError: skip the toast (the page shows the message itself).
+const runAuthAction = async (
+  action,
+  fallbackSuccess,
+  fallbackError,
+  options = {}
+) => {
+  try {
+    const response = await action()
+
+    if (!options.silentSuccess) {
+      toast.success(response.data?.message || fallbackSuccess)
+    }
+
+    return {
+      success: true,
+      data: response.data?.data,
+    }
+  } catch (error) {
+    console.error(fallbackError, error)
+
+    const message = getErrorMessage(error, fallbackError)
+
+    if (!options.silentError) {
+      toast.error(message)
+    }
+
+    return {
+      success: false,
+      error: message,
+      status: error.response?.status,
+    }
+  }
+}
 
 // =========================================================
 // SELLER STATUS HELPERS
@@ -263,11 +317,69 @@ export const AuthProvider = ({ children }) => {
   }
 
   // =========================================================
+  // SESSION HELPER (shared by login and OTP verification)
+  // =========================================================
+  //
+  // Stores tokens + user and loads the marketplace seller profile.
+  // Returns the final user object.
+  // =========================================================
+
+  const establishSession = async (authData) => {
+    const { token, refreshToken, user: userData } = authData
+
+    localStorage.setItem('token', token)
+
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken)
+    }
+
+    // Save initial user
+    if (userData) {
+      persistUser(userData)
+    }
+
+    setIsAuthenticated(true)
+
+    // Fetch seller profile too, so seller access works right after login.
+    let finalUser = userData
+
+    if (userData) {
+      try {
+        const sellerResponse = await marketplaceAPI.getMySellerProfile()
+
+        const sellerProfile = sellerResponse.data?.data
+
+        if (sellerProfile) {
+          finalUser = {
+            ...userData,
+            sellerProfile,
+          }
+
+          persistUser(finalUser)
+        }
+      } catch (sellerError) {
+        // 404 means user is not a seller yet.
+        if (sellerError.response?.status !== 404) {
+          console.warn(
+            'Could not fetch seller profile after login:',
+            sellerError
+          )
+        }
+      }
+    }
+
+    return finalUser
+  }
+
+  // =========================================================
   // LOGIN
   // =========================================================
 
-  const login = async (email, password) => {
-    setLoading(true)
+  // options.silentError: don't toast the error, the Login page shows it inline.
+const login = async (email, password, options = {}) => {
+    if (!options.silentLoading) {
+      setLoading(true)
+    }
 
     try {
       const response = await authAPI.login({
@@ -281,55 +393,9 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Invalid login response from server')
       }
 
-      const { token, refreshToken, user: userData } = authData
+      const { token, refreshToken } = authData
 
-      localStorage.setItem('token', token)
-
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken)
-      }
-
-      // -----------------------------------------------------
-      // Save initial user
-      // -----------------------------------------------------
-
-      if (userData) {
-        persistUser(userData)
-      }
-
-      setIsAuthenticated(true)
-
-      // -----------------------------------------------------
-      // IMPORTANT:
-      // Fetch seller profile after normal login too.
-      // -----------------------------------------------------
-
-      let finalUser = userData
-
-      if (userData) {
-        try {
-          const sellerResponse = await marketplaceAPI.getMySellerProfile()
-
-          const sellerProfile = sellerResponse.data?.data
-
-          if (sellerProfile) {
-            finalUser = {
-              ...userData,
-              sellerProfile,
-            }
-
-            persistUser(finalUser)
-          }
-        } catch (sellerError) {
-          // 404 means user is not a seller yet.
-          if (sellerError.response?.status !== 404) {
-            console.warn(
-              'Could not fetch seller profile after login:',
-              sellerError
-            )
-          }
-        }
-      }
+      const finalUser = await establishSession(authData)
 
       toast.success(
         `Welcome back${finalUser?.name ? `, ${finalUser.name}` : ''}!`
@@ -346,64 +412,108 @@ export const AuthProvider = ({ children }) => {
 
       const message = getErrorMessage(error, 'Invalid email or password')
 
-      toast.error(message)
+      if (!options.silentError) {
+        toast.error(message)
+      }
 
       return {
         success: false,
         error: message,
+        status: error.response?.status,
+        // true when the account exists but the email OTP was never confirmed
+        needsVerification: isUnverifiedError(error),
       }
     } finally {
-      setLoading(false)
+      if (!options.silentLoading) {
+        setLoading(false)
+      }
     }
   }
 
   // =========================================================
-  // REGISTER
+  // REGISTER  (step 1: account is created, OTP is emailed)
+  // =========================================================
+  //
+  // No token is returned any more. The user must verify the
+  // OTP first (see verifyEmail below).
   // =========================================================
 
-  const register = async (userData) => {
-    setLoading(true)
+  const register = (userData, options) =>
+    runAuthAction(
+      () => authAPI.register(userData),
+      'Registration successful. Please verify your email.',
+      'Registration failed',
+      options
+    )
 
+  // =========================================================
+  // VERIFY EMAIL OTP  (step 2: confirms OTP and logs the user in)
+  // =========================================================
+
+  const verifyEmail = async (email, otp, options = {}) => {
     try {
-      const response = await authAPI.register(userData)
+      const response = await authAPI.verifyOtp({ email, otp })
 
       const authData = response.data?.data
 
-      if (authData?.token) {
-        localStorage.setItem('token', authData.token)
+      if (!authData?.token) {
+        throw new Error('Invalid verification response from server')
       }
 
-      if (authData?.refreshToken) {
-        localStorage.setItem('refreshToken', authData.refreshToken)
-      }
+      const finalUser = await establishSession(authData)
 
-      if (authData?.user) {
-        persistUser(authData.user)
-
-        setIsAuthenticated(true)
-      }
-
-      toast.success(response.data?.message || 'Registration successful!')
+      toast.success(
+        `Email verified${finalUser?.name ? `. Welcome, ${finalUser.name}` : ''}!`
+      )
 
       return {
         success: true,
-        user: authData?.user || null,
+        user: finalUser,
       }
     } catch (error) {
-      console.error('Registration error:', error)
+      console.error('Email verification error:', error)
 
-      const message = getErrorMessage(error, 'Registration failed')
+      const message = getErrorMessage(error, 'Email verification failed')
 
-      toast.error(message)
+      if (!options.silentError) {
+        toast.error(message)
+      }
 
       return {
         success: false,
         error: message,
+        status: error.response?.status,
       }
-    } finally {
-      setLoading(false)
     }
   }
+
+  // =========================================================
+  // RESEND OTP / FORGOT PASSWORD / RESET PASSWORD
+  // =========================================================
+
+  const resendVerificationOtp = (email, options) =>
+    runAuthAction(
+      () => authAPI.resendOtp({ email }),
+      'A new code has been sent to your email',
+      'Could not resend the code',
+      options
+    )
+
+  const forgotPassword = (email, options) =>
+    runAuthAction(
+      () => authAPI.forgotPassword({ email }),
+      'If an account exists, a reset code has been sent',
+      'Could not send the reset code',
+      options
+    )
+
+  const resetPassword = (email, otp, newPassword, options) =>
+    runAuthAction(
+      () => authAPI.resetPassword({ email, otp, newPassword }),
+      'Password reset successful. You can now log in',
+      'Password reset failed',
+      options
+    )
 
   // =========================================================
   // LOGOUT
@@ -845,6 +955,10 @@ export const AuthProvider = ({ children }) => {
 
     login,
     register,
+    verifyEmail,
+    resendVerificationOtp,
+    forgotPassword,
+    resetPassword,
     logout,
     loginWithOAuthToken,
 

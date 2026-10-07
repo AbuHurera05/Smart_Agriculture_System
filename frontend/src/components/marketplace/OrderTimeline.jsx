@@ -75,7 +75,7 @@ export default function OrderTimeline({ status }) {
 
                 <span
                   className={`
-                    w-16 text-center text-[10px] font-semibold uppercase leading-tight tracking-wide
+                    w-16 text-center text-[11px] font-medium leading-tight
                     ${
                       isCurrent
                         ? 'text-green-700 dark:text-green-400'

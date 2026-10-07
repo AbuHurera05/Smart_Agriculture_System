@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { X, Package, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '../common/Button'
-import ImageUploader from '../common/imageUploader'
+import ImageUploader from '../common/ImageUploader'
 import {
   productCategories,
   productUnits,
@@ -72,9 +72,9 @@ export default function ProductFormModal({ initialData, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5 dark:bg-[#142019]">
+      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5 dark:bg-night-raised">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur-sm dark:border-white/10 dark:bg-[#142019]/95">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur-sm dark:border-white/10 dark:bg-night-raised/95">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-md shadow-green-600/25">
               <Package size={20} />

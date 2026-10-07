@@ -45,7 +45,7 @@ export default function ProductCard({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 dark:border-white/10 dark:bg-[#142019] dark:hover:border-white/20"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 dark:border-white/10 dark:bg-night-raised dark:hover:border-white/20"
     >
       {/* Image */}
       <button
@@ -108,7 +108,7 @@ export default function ProductCard({
 
         {/* Out of stock overlay */}
         {outOfStock && (
-          <span className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+          <span className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-sm font-bold text-white backdrop-blur-sm">
             Out of Stock
           </span>
         )}
