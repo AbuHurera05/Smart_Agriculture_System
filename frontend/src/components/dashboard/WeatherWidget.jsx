@@ -91,7 +91,7 @@ export default function WeatherWidget() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+            <p className="text-[11px] font-semibold text-white/70">
               Current Weather
             </p>
             <div className="mt-1 flex items-center gap-1.5">
@@ -121,7 +121,7 @@ export default function WeatherWidget() {
           <div className="flex flex-col items-center text-center">
             <Droplet className="mb-1.5 h-4 w-4 text-white/80" />
             <p className="text-sm font-semibold">{weather.humidity}%</p>
-            <p className="text-[10px] uppercase tracking-wider text-white/60">
+            <p className="text-[10px] text-white/60">
               Humidity
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function WeatherWidget() {
           <div className="flex flex-col items-center border-x border-white/10 text-center">
             <Wind className="mb-1.5 h-4 w-4 text-white/80" />
             <p className="text-sm font-semibold">{weather.windSpeed}</p>
-            <p className="text-[10px] uppercase tracking-wider text-white/60">
+            <p className="text-[10px] text-white/60">
               km/h Wind
             </p>
           </div>
@@ -137,7 +137,7 @@ export default function WeatherWidget() {
           <div className="flex flex-col items-center text-center">
             <Gauge className="mb-1.5 h-4 w-4 text-white/80" />
             <p className="text-sm font-semibold">{weather.pressure}</p>
-            <p className="text-[10px] uppercase tracking-wider text-white/60">
+            <p className="text-[10px] text-white/60">
               hPa
             </p>
           </div>

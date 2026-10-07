@@ -64,7 +64,7 @@ export default function CropStatus() {
 
               <div className="mb-2 grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-[10px] font-semibold text-slate-400">
                     Stage
                   </p>
                   <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -72,7 +72,7 @@ export default function CropStatus() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-[10px] font-semibold text-slate-400">
                     To Harvest
                   </p>
                   <p className="mt-0.5 inline-flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">

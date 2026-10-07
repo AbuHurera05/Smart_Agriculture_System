@@ -52,13 +52,11 @@ export default function StatsCard({
 
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-      className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 dark:border-white/10 dark:bg-[#142019] dark:hover:border-white/20"
+            className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-card dark:border-white/10 dark:bg-night-raised"
     >
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="truncate text-sm font-medium text-slate-500 dark:text-slate-400">
             {title}
           </p>
           <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -87,7 +85,7 @@ export default function StatsCard({
         </div>
 
         <div
-          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset transition-transform group-hover:scale-105 ${style.bg} ${style.text} ${style.ring}`}
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset  ${style.bg} ${style.text} ${style.ring}`}
         >
           <Icon className="h-6 w-6" />
         </div>
