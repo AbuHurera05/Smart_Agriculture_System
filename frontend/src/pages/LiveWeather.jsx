@@ -194,21 +194,21 @@ export default function LiveWeather() {
                   <p className="text-sm font-semibold">
                     {Number(weather.windSpeed || 0).toFixed(1)} km/h
                   </p>
-                  <p className="text-[10px] uppercase tracking-wider text-white/60">
+                  <p className="text-[10px] text-white/60">
                     Wind
                   </p>
                 </div>
                 <div className="flex flex-col items-center border-x border-white/10 text-center">
                   <Droplet className="mb-1.5 h-5 w-5 text-white/80" />
                   <p className="text-sm font-semibold">{weather.humidity}%</p>
-                  <p className="text-[10px] uppercase tracking-wider text-white/60">
+                  <p className="text-[10px] text-white/60">
                     Humidity
                   </p>
                 </div>
                 <div className="flex flex-col items-center text-center">
                   <Thermometer className="mb-1.5 h-5 w-5 text-white/80" />
                   <p className="text-sm font-semibold">UV {weather.uvIndex ?? '—'}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-white/60">
+                  <p className="text-[10px] text-white/60">
                     UV Index
                   </p>
                 </div>
@@ -275,7 +275,7 @@ export default function LiveWeather() {
                 key={index}
                 className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-center transition-all hover:border-slate-200 hover:bg-white dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10"
               >
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
                   {day.day}
                 </p>
 
@@ -303,7 +303,7 @@ export default function LiveWeather() {
             <MapPin className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <p className="text-[10px] font-bold text-slate-400">
               Weather Location
             </p>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">

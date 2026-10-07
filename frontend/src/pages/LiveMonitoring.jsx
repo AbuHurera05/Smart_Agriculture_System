@@ -81,7 +81,7 @@ export default function LiveMonitoring() {
             <button
               key={sensor.id}
               onClick={() => setSelected(sensor.id)}
-              className={`group rounded-2xl border bg-white p-3.5 text-left shadow-sm transition-all dark:bg-[#142019] ${
+              className={`group rounded-2xl border bg-white p-3.5 text-left shadow-sm transition-all dark:bg-night-raised ${
                 isActive
                   ? 'border-green-500 ring-4 ring-green-500/10'
                   : 'border-slate-200 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:hover:border-white/20'
@@ -107,7 +107,7 @@ export default function LiveMonitoring() {
                   }`}
                 />
               </div>
-              <p className="mt-2.5 truncate text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <p className="mt-2.5 truncate text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                 {sensor.name}
               </p>
               <p className="mt-0.5 text-lg font-bold tracking-tight text-slate-900 dark:text-white">
