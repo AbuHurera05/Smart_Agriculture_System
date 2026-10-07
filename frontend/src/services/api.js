@@ -1,150 +1,3 @@
-// import axios from 'axios'
-// import { API_BASE_URL } from '../utils/constants'
-
-// const api = axios.create({
-//   baseURL: API_BASE_URL,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// })
-
-// // Attach the JWT (if we have one) to every outgoing request.
-// api.interceptors.request.use(
-//   (config) => {
-//     const token = localStorage.getItem('token')
-
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`
-//     }
-
-//     return config
-//   },
-//   (error) => Promise.reject(error)
-// )
-
-
-// api.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response?.status === 401) {
-//       localStorage.removeItem('token')
-//       localStorage.removeItem('refreshToken')
-//       localStorage.removeItem('user')
-//       window.location.href = '/login'
-//     }
-
-//     return Promise.reject(error)
-//   }
-// )
-
-// // =========================================================
-// // AUTH  ->  AuthController  (/auth)
-// // =========================================================
-// export const authAPI = {
-//   login: (credentials) => api.post('/auth/login', credentials),
-//   register: (userData) => api.post('/auth/register', userData),
-//   logout: () => api.post('/auth/logout'),
-//   getProfile: () => api.get('/auth/profile'),
-//   googleLogin: () => {
-//     window.location.href =
-//       `${API_BASE_URL}/oauth2/authorization/google`
-//   },
-// }
-
-// // =========================================================
-// // CURRENT USER  ->  UserController  (/users)
-// // =========================================================
-// export const userAPI = {
-//   updateProfile: (data) => api.put('/users/profile', data),
-//   changePassword: (data) => api.put('/users/password', data),
-//   updateSettings: (data) => api.put('/users/settings', data),
-//   uploadAvatar: (formData) =>
-//     api.post('/users/avatar', formData, {
-//       headers: { 'Content-Type': 'multipart/form-data' },
-//     }),
-// }
-
-// // =========================================================
-// // ADMIN: USER MANAGEMENT  ->  AdminController  (/admin/users)
-// // =========================================================
-// export const adminAPI = {
-//   getAllUsers: () => api.get('/admin/users'),
-//   createUser: (data) => api.post('/admin/users', data),
-//   updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
-//   deleteUser: (id) => api.delete(`/admin/users/${id}`),
-// }
-
-// // =========================================================
-// // WEATHER  ->  WeatherController  (/weather)
-// // =========================================================
-// export const weatherAPI = {
-//   getCurrentWeather: (location) => api.get('/weather/current', { params: { location } }),
-//   getForecast: (location) => api.get('/weather/forecast', { params: { location } }),
-// }
-
-// // =========================================================
-// // CHATBOT  ->  ChatbotController  (/chatbot)
-// // =========================================================
-// export const chatbotAPI = {
-//   sendMessage: (message, history = []) => api.post('/chatbot/message', { message, history }),
-//   getSuggestions: () => api.get('/chatbot/suggestions'),
-// }
-
-// // =========================================================
-// // MARKETPLACE  ->  ProductController, OrderController, SellerController
-// // =========================================================
-// export const marketplaceAPI = {
-//   // Products  (/marketplace/products)
-//   getProducts: (params) => api.get('/marketplace/products', { params }),
-//   getProductById: (id) => api.get(`/marketplace/products/${id}`),
-//   getMyListings: () => api.get('/marketplace/products/my-listings'),
-//   createProduct: (data) => api.post('/marketplace/products', data),
-//   updateProduct: (id, data) => api.put(`/marketplace/products/${id}`, data),
-//   deleteProduct: (id) => api.delete(`/marketplace/products/${id}`),
-//   addProductReview: (productId, data) => api.post(`/marketplace/products/${productId}/reviews`, data),
-
-//   // Categories  (/marketplace/categories)
-//   getCategories: () => api.get('/marketplace/categories'),
-
-//   // Seller onboarding  (/marketplace/sellers)
-//   becomeSeller: (data) => api.post('/marketplace/sellers/register', data),
-//   getMySellerProfile: () => api.get('/marketplace/sellers/me'),
-//   getMySellerAnalytics: () => api.get('/marketplace/sellers/me/analytics'),
-//   getSellerProfile: (id) => api.get(`/marketplace/sellers/${id}`),
-
-//   // Orders  (/marketplace/orders)
-//   createOrder: (data) => api.post('/marketplace/orders', data),
-//   getMyOrders: () => api.get('/marketplace/orders/my-orders'),
-//   getSellerOrders: () => api.get('/marketplace/orders/seller-orders'),
-//   getOrderById: (id) => api.get(`/marketplace/orders/${id}`),
-//   updateOrderStatus: (id, status) => api.patch(`/marketplace/orders/${id}/status`, { status }),
-// }
-
-// // =========================================================
-// // MARKETPLACE ADMIN  ->  AdminController  (/marketplace/admin) - ROLE_ADMIN only
-// // =========================================================
-// export const marketplaceAdminAPI = {
-//   // Sellers
-//   getPendingSellers: () => api.get('/marketplace/admin/sellers/pending'),
-//   approveSeller: (id) => api.post(`/marketplace/admin/sellers/${id}/approve`),
-//   rejectSeller: (id, reason) => api.post(`/marketplace/admin/sellers/${id}/reject`, reason ? { reason } : {}),
-//   suspendSeller: (id, reason) => api.post(`/marketplace/admin/sellers/${id}/suspend`, reason ? { reason } : {}),
-//   verifySeller: (id) => api.post(`/marketplace/admin/sellers/${id}/verify`),
-
-//   // Products
-//   getPendingProducts: () => api.get('/marketplace/admin/products/pending'),
-//   approveProduct: (id) => api.post(`/marketplace/admin/products/${id}/approve`),
-//   rejectProduct: (id, reason) => api.post(`/marketplace/admin/products/${id}/reject`, reason ? { reason } : {}),
-//   suspendProduct: (id, reason) => api.post(`/marketplace/admin/products/${id}/suspend`, reason ? { reason } : {}),
-
-//   // Payments (manual-transfer proof review)
-//   getPendingPayments: () => api.get('/marketplace/admin/payments/pending'),
-//   approvePayment: (orderId) => api.post(`/marketplace/admin/payments/order/${orderId}/approve`),
-//   rejectPayment: (orderId, reason) => api.post(`/marketplace/admin/payments/order/${orderId}/reject`, reason ? { reason } : {}),
-// }
-
-// export default api
-
 import axios from 'axios'
 import { API_BASE_URL } from '../utils/constants'
 
@@ -178,10 +31,24 @@ api.interceptors.request.use(
 )
 
 
+const PUBLIC_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/verify-otp',
+  '/auth/resend-otp',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+]
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || ''
+    const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((path) =>
+      requestUrl.includes(path)
+    )
+
+    if (error.response?.status === 401 && !isPublicAuthRequest) {
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
@@ -200,6 +67,13 @@ export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
   getProfile: () => api.get('/auth/profile'),
+
+  // OTP flow (email verification after register + forgot password)
+  verifyOtp: (data) => api.post('/auth/verify-otp', data),
+  resendOtp: (data) => api.post('/auth/resend-otp', data),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
+
   googleLogin: () => {
     window.location.href =
       `${API_BASE_URL}/oauth2/authorization/google`
