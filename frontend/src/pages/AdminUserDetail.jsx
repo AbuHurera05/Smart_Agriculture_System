@@ -52,7 +52,7 @@ export default function AdminUserDetail() {
   if (!targetUser) {
     return (
       <div className="space-y-6">
-        <Button variant="secondary" onClick={() => navigate('/admin')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Admin Panel
         </Button>
         <Card className="py-12 text-center">
@@ -66,7 +66,7 @@ export default function AdminUserDetail() {
 
   return (
     <div className="space-y-6">
-      <Button variant="secondary" onClick={() => navigate('/admin')}>
+      <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Admin Panel
       </Button>
 
@@ -133,7 +133,7 @@ export default function AdminUserDetail() {
 
         <div className="mt-6 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
           <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[10px] font-semibold text-slate-400">
               Farm Size
             </p>
             <p className="mt-0.5 font-medium text-slate-800 dark:text-slate-100">
@@ -141,7 +141,7 @@ export default function AdminUserDetail() {
             </p>
           </div>
           <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[10px] font-semibold text-slate-400">
               Specialization
             </p>
             <p className="mt-0.5 font-medium text-slate-800 dark:text-slate-100">
@@ -149,7 +149,7 @@ export default function AdminUserDetail() {
             </p>
           </div>
           <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[10px] font-semibold text-slate-400">
               Experience
             </p>
             <p className="mt-0.5 font-medium text-slate-800 dark:text-slate-100">
@@ -209,7 +209,7 @@ export default function AdminUserDetail() {
                   {['Name', 'Type', 'Location', 'Status', 'Battery'].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      className="px-4 py-3 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400"
                     >
                       {h}
                     </th>

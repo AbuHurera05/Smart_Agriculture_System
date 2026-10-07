@@ -6,7 +6,7 @@ import {
 import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
-import ImageUploader from '../components/common/imageUploader'
+import ImageUploader from '../components/common/ImageUploader'
 import useStore from '../store/useStore'
 import { useAuthContext } from '../context/AuthContext'
 import { marketplaceAPI, paymentAccountAPI } from '../services/api'
@@ -392,7 +392,7 @@ export default function Checkout() {
 
               {isManual && (
                 <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-white/10 dark:bg-white/5">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
                     Where to send the money
                   </p>
 
@@ -444,7 +444,7 @@ export default function Checkout() {
                   )}
 
                   <div className="border-t border-slate-200 pt-3 dark:border-white/10">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                    <p className="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">
                       Already transferred? Add proof (optional)
                     </p>
 
@@ -507,7 +507,7 @@ export default function Checkout() {
               </h2>
 
               <div className="mb-4 rounded-xl bg-slate-50 p-4 text-sm dark:bg-white/5">
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <p className="mb-1 text-[10px] font-bold text-slate-500">
                   Deliver to
                 </p>
                 <p className="font-semibold text-slate-800 dark:text-white">
@@ -516,7 +516,7 @@ export default function Checkout() {
                 <p className="text-slate-600 dark:text-slate-300">
                   {deliveryAddress}
                 </p>
-                <p className="mt-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <p className="mt-3 mb-1 text-[10px] font-bold text-slate-500">
                   Payment
                 </p>
                 <p className="text-slate-600 dark:text-slate-300">

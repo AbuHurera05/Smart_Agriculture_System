@@ -303,30 +303,50 @@ export default function AdminPanel() {
     }
   }
 
-  const handleToggleExpertAccess = async (targetUser) => {
-    const isExpert = (targetUser.userType || '').toUpperCase() === 'EXPERT'
-    const nextUserType = isExpert ? 'FARMER' : 'EXPERT'
+  // const handleToggleExpertAccess = async (targetUser) => {
+  //   const isExpert = (targetUser.userType || '').toUpperCase() === 'EXPERT'
+  //   const nextUserType = isExpert ? 'FARMER' : 'EXPERT'
 
-    const confirmed = window.confirm(
-      isExpert
-        ? `Revoke expert access for ${targetUser.name}? They will become a farmer.`
-        : `Grant expert access to ${targetUser.name}?`
-    )
-    if (!confirmed) return
+  //   const confirmed = window.confirm(
+  //     isExpert
+  //       ? `Revoke expert access for ${targetUser.name}? They will become a farmer.`
+  //       : `Grant expert access to ${targetUser.name}?`
+  //   )
+  //   if (!confirmed) return
 
-    setLoading(true)
-    try {
-      await adminUpdateUser(targetUser.id, {
-        name: targetUser.name,
-        email: targetUser.email,
-        role: targetUser.role,
-        userType: nextUserType,
-        phone: targetUser.phone,
-        location: targetUser.location,
-      })
-    } finally {
-      setLoading(false)
+  //   setLoading(true)
+  //   try {
+  //     await adminUpdateUser(targetUser.id, {
+  //       name: targetUser.name,
+  //       email: targetUser.email,
+  //       role: targetUser.role,
+  //       userType: nextUserType,
+  //       phone: targetUser.phone,
+  //       location: targetUser.location,
+  //     })
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+
+  // Client-side CSV export of whatever table is on screen (falls back to users)
+  const exportCsv = () => {
+    const source = ['users', 'sensors', 'crops'].includes(activeTab) ? activeTab : 'users'
+    const rows = source === 'users' ? users : source === 'sensors' ? sensors : crops
+    if (!rows || rows.length === 0) {
+      toast.error('There is nothing to export yet')
+      return
     }
+    const columns = Object.keys(rows[0]).filter((k) => typeof rows[0][k] !== 'object' && k !== 'password')
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const csv = [columns.join(','), ...rows.map((r) => columns.map((c) => esc(r[c])).join(','))].join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `agrobazaar-${source}-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`Exported ${rows.length} ${source}`)
   }
 
   const getCurrentData = () => {
@@ -355,7 +375,7 @@ export default function AdminPanel() {
             required: modalType === 'add',
           },
           { name: 'role', label: 'Security Role', type: 'select', options: ['ADMIN', 'USER'], required: true },
-          { name: 'userType', label: 'User Type', type: 'select', options: ['ADMIN', 'FARMER', 'EXPERT'], required: true },
+          { name: 'userType', label: 'User Type', type: 'select', options: ['ADMIN', 'FARMER'], required: true },
           { name: 'phone', label: 'Phone', type: 'text' },
           { name: 'location', label: 'Location', type: 'text' },
         ]
@@ -450,12 +470,12 @@ export default function AdminPanel() {
               {columns.map((key) => (
                 <th
                   key={key}
-                  className="px-6 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="px-6 py-3.5 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400"
                 >
                   {key.replace(/([A-Z])/g, ' $1').trim()}
                 </th>
               ))}
-              <th className="px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th className="px-6 py-3.5 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400">
                 Actions
               </th>
             </tr>
@@ -514,7 +534,7 @@ export default function AdminPanel() {
                         <Eye className="h-4 w-4" />
                       </button>
                     )}
-                    {activeTab === 'users' &&
+                    {/* {activeTab === 'users' &&
                       (item.userType || '').toUpperCase() !== 'ADMIN' && (
                         <button
                           onClick={() => handleToggleExpertAccess(item)}
@@ -531,7 +551,7 @@ export default function AdminPanel() {
                         >
                           <GraduationCap className="h-4 w-4" />
                         </button>
-                      )}
+                      )} */}
                     <button
                       onClick={() => handleEdit(item)}
                       className="rounded-lg p-1.5 text-blue-500 transition-colors hover:bg-blue-50 dark:hover:bg-blue-500/10"
@@ -589,7 +609,7 @@ export default function AdminPanel() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+          <h1 className="page-title">
             Admin Panel
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -597,12 +617,10 @@ export default function AdminPanel() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Export
+          <Button variant="secondary" size="sm" onClick={exportCsv} leftIcon={<Download className="h-4 w-4" />}>
+            Export CSV
           </Button>
-          <Button variant="primary" size="sm" onClick={() => fetchUsers()}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+          <Button variant="primary" size="sm" onClick={() => fetchUsers()} leftIcon={<RefreshCw className="h-4 w-4" />}>
             Sync
           </Button>
         </div>
@@ -615,7 +633,7 @@ export default function AdminPanel() {
             <Card key={idx} hover>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     {stat.label}
                   </p>
                   <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -640,7 +658,7 @@ export default function AdminPanel() {
 
       {/* Tabs */}
       <div className="overflow-x-auto border-b border-slate-200 dark:border-white/10">
-        <nav className="-mb-px flex gap-1">
+        <nav className="-mb-px flex gap-1" aria-label="Admin sections">
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -649,7 +667,8 @@ export default function AdminPanel() {
                 setCurrentPage(1)
                 setSearchTerm('')
               }}
-              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-all ${
+              aria-current={activeTab === item.id ? 'page' : undefined}
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
                 activeTab === item.id
                   ? 'border-green-600 text-green-700 dark:border-green-500 dark:text-green-400'
                   : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -661,6 +680,35 @@ export default function AdminPanel() {
           ))}
         </nav>
       </div>
+
+      {/* Overview body */}
+      {activeTab === 'overview' && (
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { id: 'sellerRequests', icon: Store, title: 'Seller requests', text: 'Review farmers who applied to sell on the marketplace.' },
+            { id: 'productApprovals', icon: Package, title: 'Product approvals', text: 'Approve or reject listings before they go live.' },
+            { id: 'users', icon: Users, title: 'User management', text: `Manage ${users.length} registered ${users.length === 1 ? 'account' : 'accounts'} and their roles.` },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveTab(item.id)
+                setCurrentPage(1)
+                setSearchTerm('')
+              }}
+              className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card transition-[border-color,box-shadow] hover:border-green-300 hover:shadow-card-hover dark:border-white/10 dark:bg-night-raised dark:hover:border-white/25"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                <item.icon className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-slate-900 dark:text-white">{item.title}</span>
+                <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">{item.text}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Seller Requests */}
       {activeTab === 'sellerRequests' && (
@@ -976,7 +1024,7 @@ export default function AdminPanel() {
       {/* CRUD Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-          <div className="max-h-[92vh] w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5 dark:bg-[#142019]">
+          <div className="max-h-[92vh] w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5 dark:bg-night-raised">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
               <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                 {modalType === 'add' ? 'Add New' : 'Edit'} {activeTab.slice(0, -1)}

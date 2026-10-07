@@ -53,7 +53,7 @@ export default function Cart() {
       </button>
 
       <div className="flex items-baseline gap-2">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="page-title">
           Your Cart
         </h1>
         <span className="text-sm text-slate-400">
@@ -65,7 +65,7 @@ export default function Cart() {
         <div className="space-y-5 lg:col-span-2">
           {Object.entries(groupedBySeller).map(([sellerId, group]) => (
             <div key={sellerId}>
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <Store size={13} /> Sold by {group.sellerName || 'Seller'}
               </p>
 
@@ -141,7 +141,7 @@ export default function Cart() {
                       </div>
 
                       <div className="min-w-[92px] text-right">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        <p className="text-[11px] font-semibold text-slate-400">
                           Subtotal
                         </p>
                         <p className="mt-0.5 font-bold text-green-600 dark:text-green-400">
