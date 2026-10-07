@@ -1,179 +1,3 @@
-// import { useEffect, useMemo, useState } from 'react'
-// import { useNavigate } from 'react-router-dom'
-// import { ChevronLeft, ClipboardList, Store, ChevronRight } from 'lucide-react'
-// import Card from '../components/common/Card'
-// import Button from '../components/common/Button'
-// import { SkeletonCard } from '../components/common/Skeleton'
-// import { marketplaceAPI } from '../services/api'
-// import { orderFromResponse } from '../utils/marketplaceMapper'
-// import {
-//   orderStatusColor,
-//   paymentMethodLabel,
-//   paymentStatusColor,
-//   paymentStatusLabel,
-// } from '../utils/constants'
-// import { formatPKR, formatDate } from '../utils/format'
-// import { getApiErrorMessage } from '../utils/apiError'
-// import { EmptyState, ErrorState } from './Marketplace'
-
-// const TABS = ['All', 'Pending', 'Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled']
-
-// export default function MyOrders() {
-//   const navigate = useNavigate()
-
-//   const [orders, setOrders] = useState([])
-//   const [loading, setLoading] = useState(true)
-//   const [error, setError] = useState(null)
-//   const [tab, setTab] = useState('All')
-
-//   const load = async () => {
-//     setLoading(true)
-//     setError(null)
-
-//     try {
-//       const res = await marketplaceAPI.getMyOrders()
-//       const raw = res.data?.data ?? res.data?.content ?? res.data ?? []
-//       const list = (Array.isArray(raw) ? raw : []).map(orderFromResponse)
-
-//       setOrders(
-//         list.sort(
-//           (a, b) =>
-//             new Date(b.orderDateTime || b.orderDate) - new Date(a.orderDateTime || a.orderDate)
-//         )
-//       )
-//     } catch (err) {
-//       setError(getApiErrorMessage(err, { 404: 'No orders found.' }))
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   useEffect(() => {
-//     load()
-//   }, [])
-
-//   const filtered = useMemo(
-//     () => (tab === 'All' ? orders : orders.filter((o) => o.status === tab)),
-//     [orders, tab]
-//   )
-
-//   return (
-//     <div className="space-y-5">
-//       <button
-//         onClick={() => navigate('/marketplace')}
-//         className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-//       >
-//         <ChevronLeft size={16} /> Back to Marketplace
-//       </button>
-
-//       <h1 className="text-xl font-bold text-gray-800">My Orders</h1>
-
-//       <div className="flex items-center gap-1 overflow-x-auto border-b border-gray-200">
-//         {TABS.map((t) => (
-//           <button
-//             key={t}
-//             onClick={() => setTab(t)}
-//             className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-//               tab === t
-//                 ? 'border-primary text-primary'
-//                 : 'border-transparent text-gray-500 hover:text-gray-700'
-//             }`}
-//           >
-//             {t}
-//           </button>
-//         ))}
-//       </div>
-
-//       {loading ? (
-//         <div className="space-y-3">
-//           {Array.from({ length: 3 }).map((_, i) => (
-//             <SkeletonCard key={i} />
-//           ))}
-//         </div>
-//       ) : error ? (
-//         <ErrorState message={error} onRetry={load} />
-//       ) : orders.length === 0 ? (
-//         <EmptyState
-//           icon={ClipboardList}
-//           title="You haven't placed any orders yet."
-//           subtitle="Your purchases will show up here once you place an order."
-//           action={
-//             <Button variant="primary" className="mt-4" onClick={() => navigate('/marketplace')}>
-//               Browse Products
-//             </Button>
-//           }
-//         />
-//       ) : filtered.length === 0 ? (
-//         <EmptyState
-//           icon={ClipboardList}
-//           title="No orders here"
-//           subtitle={`You have no ${tab.toLowerCase()} orders right now.`}
-//           action={
-//             <Button variant="outline" className="mt-4" onClick={() => setTab('All')}>
-//               Show all orders
-//             </Button>
-//           }
-//         />
-//       ) : (
-//         <div className="space-y-3">
-//           {filtered.map((order) => (
-//             <Card key={order.id}>
-//               <button
-//                 className="w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-//                 onClick={() => navigate(`/marketplace/orders/${order.id}`)}
-//               >
-//                 <div className="min-w-0">
-//                   <div className="flex items-center gap-2 flex-wrap">
-//                     <p className="font-semibold text-gray-800">{order.displayId}</p>
-//                     <span className={`badge ${orderStatusColor[order.status] || 'badge-info'}`}>
-//                       {order.status}
-//                     </span>
-//                     {order.paymentStatus && (
-//                       <span
-//                         className={`badge ${
-//                           paymentStatusColor[order.paymentStatus] || 'badge-info'
-//                         }`}
-//                       >
-//                         {paymentStatusLabel[order.paymentStatus] || order.paymentStatus}
-//                       </span>
-//                     )}
-//                   </div>
-
-//                   <p className="text-xs text-gray-500 mt-1 flex items-center gap-1 flex-wrap">
-//                     <Store size={11} /> {order.sellerName || 'Seller'}
-//                     <span className="text-gray-300">•</span>
-//                     {formatDate(order.orderDateTime || order.orderDate)}
-//                     {order.paymentMethod && (
-//                       <>
-//                         <span className="text-gray-300">•</span>
-//                         {paymentMethodLabel[order.paymentMethod] || order.paymentMethod}
-//                       </>
-//                     )}
-//                   </p>
-
-//                   <ul className="text-sm text-gray-600 mt-2 space-y-0.5">
-//                     {order.items.map((it) => (
-//                       <li key={it.productId}>
-//                         {it.qty} {it.unit} × {it.title}
-//                       </li>
-//                     ))}
-//                   </ul>
-//                 </div>
-
-//                 <div className="flex items-center gap-2 shrink-0">
-//                   <p className="font-bold text-primary text-lg">{formatPKR(order.totalAmount)}</p>
-//                   <ChevronRight size={18} className="text-gray-300" />
-//                 </div>
-//               </button>
-//             </Card>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   )
-// }
-
-
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ClipboardList, Store, ChevronRight } from 'lucide-react'
@@ -193,7 +17,6 @@ import { formatPKR, formatDate } from '../utils/format'
 import { getApiErrorMessage } from '../utils/apiError'
 import { EmptyState, ErrorState } from './Marketplace'
 
-// Grouped tabs — the backend has 11 statuses, which is too many to show as tabs.
 const TABS = [
   { id: 'ALL', label: 'All', matches: null },
   { id: 'PENDING', label: 'Pending', matches: ['PENDING'] },
@@ -226,7 +49,8 @@ export default function MyOrders() {
       setOrders(
         list.sort(
           (a, b) =>
-            new Date(b.orderDateTime || b.orderDate) - new Date(a.orderDateTime || a.orderDate)
+            new Date(b.orderDateTime || b.orderDate) -
+            new Date(a.orderDateTime || a.orderDate)
         )
       )
     } catch (err) {
@@ -250,22 +74,24 @@ export default function MyOrders() {
     <div className="space-y-5">
       <button
         onClick={() => navigate('/marketplace')}
-        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+        className="flex items-center gap-1 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
       >
         <ChevronLeft size={16} /> Back to Marketplace
       </button>
 
-      <h1 className="text-xl font-bold text-gray-800">My Orders</h1>
+      <h1 className="page-title">
+        My Orders
+      </h1>
 
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-gray-200">
+      <div className="-mb-px flex items-center gap-1 overflow-x-auto border-b border-slate-200 dark:border-white/10">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
               tab === t.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-green-600 text-green-700 dark:border-green-500 dark:text-green-400'
+                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             {t.label}
@@ -287,7 +113,11 @@ export default function MyOrders() {
           title="You haven't placed any orders yet."
           subtitle="Your purchases will show up here once you place an order."
           action={
-            <Button variant="primary" className="mt-4" onClick={() => navigate('/marketplace')}>
+            <Button
+              variant="primary"
+              className="mt-4"
+              onClick={() => navigate('/marketplace')}
+            >
               Browse Products
             </Button>
           }
@@ -298,7 +128,11 @@ export default function MyOrders() {
           title="No orders here"
           subtitle="There are no orders in this category right now."
           action={
-            <Button variant="outline" className="mt-4" onClick={() => setTab('ALL')}>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => setTab('ALL')}
+            >
               Show all orders
             </Button>
           }
@@ -308,50 +142,59 @@ export default function MyOrders() {
           {filtered.map((order) => (
             <Card key={order.id}>
               <button
-                className="w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="flex w-full flex-col justify-between gap-3 text-left transition-opacity hover:opacity-90 sm:flex-row sm:items-center"
                 onClick={() => navigate(`/marketplace/orders/${order.id}`)}
               >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-gray-800">{order.displayId}</p>
-                    <span className={`badge ${orderStatusColor[order.status] || 'badge-info'}`}>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      {order.displayId}
+                    </p>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${orderStatusColor[order.status] || 'bg-blue-50 text-blue-700 ring-blue-500/20'}`}
+                    >
                       {orderStatusLabel[order.status] || order.status}
                     </span>
                     {order.paymentStatus && (
                       <span
-                        className={`badge ${
-                          paymentStatusColor[order.paymentStatus] || 'badge-info'
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${paymentStatusColor[order.paymentStatus] || 'bg-blue-50 text-blue-700 ring-blue-500/20'}`}
                       >
-                        {paymentStatusLabel[order.paymentStatus] || order.paymentStatus}
+                        {paymentStatusLabel[order.paymentStatus] ||
+                          order.paymentStatus}
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1 flex-wrap">
-                    <Store size={11} /> {order.sellerName || 'Seller'}
-                    <span className="text-gray-300">•</span>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                    <Store size={11} />
+                    <span className="font-medium">
+                      {order.sellerName || 'Seller'}
+                    </span>
+                    <span className="text-slate-300">•</span>
                     {formatDate(order.orderDateTime || order.orderDate)}
                     {order.paymentMethod && (
                       <>
-                        <span className="text-gray-300">•</span>
-                        {paymentMethodLabel[order.paymentMethod] || order.paymentMethod}
+                        <span className="text-slate-300">•</span>
+                        {paymentMethodLabel[order.paymentMethod] ||
+                          order.paymentMethod}
                       </>
                     )}
                   </p>
 
-                  <ul className="text-sm text-gray-600 mt-2 space-y-0.5">
+                  <ul className="mt-2 space-y-0.5 text-sm text-slate-600 dark:text-slate-300">
                     {order.items.map((it) => (
-                      <li key={it.productId}>
+                      <li key={it.productId} className="truncate">
                         {it.qty} {it.unit} × {it.title}
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <p className="font-bold text-primary text-lg">{formatPKR(order.totalAmount)}</p>
-                  <ChevronRight size={18} className="text-gray-300" />
+                <div className="flex shrink-0 items-center gap-2">
+                  <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                    {formatPKR(order.totalAmount)}
+                  </p>
+                  <ChevronRight size={18} className="text-slate-300" />
                 </div>
               </button>
             </Card>
