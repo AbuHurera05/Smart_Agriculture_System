@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion'
-
 export default function Card({
   children,
   className = '',
@@ -7,23 +5,32 @@ export default function Card({
   onClick,
   noPadding = false,
 }) {
+  const interactive = Boolean(onClick)
+
+  const onKeyDown = interactive
+    ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick(e)
+        }
+      }
+    : undefined
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+    <div
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onKeyDown={onKeyDown}
+      onClick={onClick}
       className={`
-        rounded-2xl border border-slate-200 bg-white shadow-sm
-        dark:border-white/10 dark:bg-[#142019]
+        rounded-2xl border border-slate-200 bg-white shadow-card
+        dark:border-white/10 dark:bg-night-raised
         ${noPadding ? '' : 'p-5 sm:p-6'}
-        ${hover ? 'cursor-pointer transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-900/5 dark:hover:border-white/20' : ''}
+        ${hover ? 'cursor-pointer transition-[box-shadow,border-color] duration-200 hover:border-green-300 hover:shadow-card-hover dark:hover:border-white/25' : ''}
         ${className}
       `}
-      onClick={onClick}
-      whileHover={hover ? { y: -3 } : {}}
-      whileTap={hover ? { scale: 0.99 } : {}}
     >
       {children}
-    </motion.div>
+    </div>
   )
 }
