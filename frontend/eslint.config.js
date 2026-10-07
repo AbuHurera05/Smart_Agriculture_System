@@ -23,7 +23,15 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // JSX usage (<motion.div>, <Icon />) is not tracked by the base rule
+      'no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: '^([A-Z_]|motion$)',
+          argsIgnorePattern: '^[A-Z_]',
+          caughtErrors: 'none',
+        },
+      ],
     },
   },
 ])
