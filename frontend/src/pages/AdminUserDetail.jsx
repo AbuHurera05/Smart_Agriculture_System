@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, BadgeCheck,
-  Map, Wifi, Sprout, Activity, Battery, GraduationCap,
+  Map, Wifi, Sprout, Activity, Battery,
 } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
@@ -11,41 +11,19 @@ import { generateUserFarmData } from '../utils/mockUserData'
 
 const userTypeBadge = {
   admin: 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400',
-  expert: 'bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400',
   farmer: 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400',
 }
 
 export default function AdminUserDetail() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const { users, fetchUsers, adminUpdateUser } = useAuthContext()
+  const { users, fetchUsers } = useAuthContext()
 
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
   const targetUser = users.find((u) => String(u.id) === String(userId))
-
-  const handleToggleExpertAccess = async () => {
-    const isExpert = (targetUser.userType || '').toUpperCase() === 'EXPERT'
-    const nextUserType = isExpert ? 'FARMER' : 'EXPERT'
-
-    const confirmed = window.confirm(
-      isExpert
-        ? `Revoke expert access for ${targetUser.name}? They will become a farmer.`
-        : `Grant expert access to ${targetUser.name}?`
-    )
-    if (!confirmed) return
-
-    await adminUpdateUser(targetUser.id, {
-      name: targetUser.name,
-      email: targetUser.email,
-      role: targetUser.role,
-      userType: nextUserType,
-      phone: targetUser.phone,
-      location: targetUser.location,
-    })
-  }
 
   const farmData = useMemo(() => generateUserFarmData(userId), [userId])
 
@@ -116,18 +94,6 @@ export default function AdminUserDetail() {
                 ? new Date(targetUser.joinDate).toLocaleDateString()
                 : '—'}
             </span>
-            {userType !== 'admin' && (
-              <Button
-                variant={userType === 'expert' ? 'danger' : 'secondary'}
-                size="sm"
-                onClick={handleToggleExpertAccess}
-              >
-                <GraduationCap className="mr-1 h-4 w-4" />
-                {userType === 'expert'
-                  ? 'Revoke Expert Access'
-                  : 'Grant Expert Access'}
-              </Button>
-            )}
           </div>
         </div>
 

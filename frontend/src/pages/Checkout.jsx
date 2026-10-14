@@ -133,22 +133,66 @@ export default function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod, groupedBySeller])
 
+  const [guestOrderSuccess, setGuestOrderSuccess] = useState(null)
+
   useEffect(() => {
     setSelectedAccountId('')
   }, [paymentMethod])
 
-  if (!user) {
+  if (guestOrderSuccess) {
     return (
-      <EmptyState
-        icon={ShoppingCart}
-        title="Please login to continue."
-        subtitle="You need to be signed in before placing an order."
-        action={
-          <Button variant="primary" className="mt-4" onClick={() => navigate('/login')}>
-            Login
+      <div className="mx-auto max-w-xl text-center py-10 px-4 space-y-6">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 shadow-sm">
+          <ClipboardCheck className="h-10 w-10" />
+        </div>
+        <div>
+          <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300">
+            Order Confirmed (Guest Checkout)
+          </span>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
+            Thank You for Your Order!
+          </h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Your order has been placed with AsanKisan Verified Farmers. Our team will verify and dispatch your agricultural supplies directly to your doorstep.
+          </p>
+        </div>
+
+        <Card className="text-left space-y-3">
+          <div className="flex justify-between text-sm py-1 border-b border-slate-100 dark:border-white/10">
+            <span className="text-slate-500">Recipient:</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{buyer.name}</span>
+          </div>
+          <div className="flex justify-between text-sm py-1 border-b border-slate-100 dark:border-white/10">
+            <span className="text-slate-500">Contact Phone:</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{buyer.phone}</span>
+          </div>
+          <div className="flex justify-between text-sm py-1 border-b border-slate-100 dark:border-white/10">
+            <span className="text-slate-500">Delivery Address:</span>
+            <span className="font-semibold text-slate-900 dark:text-white text-right">{buyer.address}, {buyer.city}</span>
+          </div>
+          <div className="flex justify-between text-sm py-1 border-b border-slate-100 dark:border-white/10">
+            <span className="text-slate-500">Payment:</span>
+            <span className="font-semibold text-emerald-600">
+              {paymentMethod === 'CASH_ON_DELIVERY' ? 'Cash on Delivery (Pay upon arrival)' : paymentMethod}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm pt-1">
+            <span className="font-bold text-slate-900 dark:text-white">Orders Generated:</span>
+            <span className="font-bold text-green-700 dark:text-green-400">
+              {guestOrderSuccess.orders.map((o) => `#${o?.id || 'OK'}`).join(', ')}
+            </span>
+          </div>
+        </Card>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Button variant="primary" onClick={() => navigate('/marketplace')}>
+            Continue Shopping
           </Button>
-        }
-      />
+          <Button variant="secondary" onClick={() => navigate('/login')}>
+            Create Account to Track Orders
+          </Button>
+        </div>
+      </div>
     )
   }
 
@@ -253,11 +297,19 @@ export default function Checkout() {
           : 'Order placed successfully!'
       )
 
-      navigate(
-        first?.id
-          ? `/marketplace/orders/${first.id}`
-          : '/marketplace/orders'
-      )
+      if (user) {
+        navigate(
+          first?.id
+            ? `/marketplace/orders/${first.id}`
+            : '/marketplace/orders'
+        )
+      } else {
+        setGuestOrderSuccess({
+          orders: created,
+          buyer,
+          paymentMethod,
+        })
+      }
     } catch (err) {
       const message = getApiErrorMessage(err, {
         401: 'Please login to continue.',
@@ -330,6 +382,24 @@ export default function Checkout() {
                 </div>
                 Delivery Information
               </h2>
+
+              {!user && (
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                    <span>
+                      <strong>Guest Checkout Active:</strong> No account required! Fill in your details below to place your order.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="font-bold underline text-blue-700 dark:text-blue-300 hover:text-blue-900 shrink-0 text-left"
+                  >
+                    Already have an account? Sign In
+                  </button>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Full Name" required value={buyer.name} onChange={(v) => setBuyer({ ...buyer, name: v })} />

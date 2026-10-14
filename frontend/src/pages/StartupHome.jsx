@@ -26,6 +26,8 @@ import {
   ExternalLink,
   ChevronRight,
   UserCheck,
+  MessageCircle,
+  Sprout,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import useStore from '../store/useStore'
@@ -170,6 +172,24 @@ export default function StartupHome() {
   const [selectedCategory, setSelectedCategory] = useState('All Products')
   const [searchQuery, setSearchQuery] = useState('')
 
+  const [quickName, setQuickName] = useState('')
+  const [quickContact, setQuickContact] = useState('')
+  const [quickSubject, setQuickSubject] = useState('IoT Hardware & Sensors')
+  const [quickMessage, setQuickMessage] = useState('')
+  const [quickSubmitting, setQuickSubmitting] = useState(false)
+
+  const handleQuickContact = (e) => {
+    e.preventDefault()
+    setQuickSubmitting(true)
+    setTimeout(() => {
+      setQuickSubmitting(false)
+      toast.success('Your inquiry has been received! Our team will contact you shortly.', { icon: '✅' })
+      setQuickName('')
+      setQuickContact('')
+      setQuickMessage('')
+    }, 700)
+  }
+
   const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0)
 
   // Fetch real marketplace products if backend is up
@@ -297,12 +317,12 @@ export default function StartupHome() {
             <Link to="/crop-guide" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
               Crop Advisory
             </Link>
-            <Link to="/about" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+            <a href="#about-section" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
               About
-            </Link>
-            <Link to="/contact" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+            </a>
+            <a href="#contact-section" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
               Contact
-            </Link>
+            </a>
           </nav>
 
           {/* Right Controls: Cart, Dark Mode, Login/Dashboard */}
@@ -759,6 +779,289 @@ export default function StartupHome() {
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 Heavy-duty motor switch with automated moisture thresholds and manual override.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================
+          ABOUT ASANKISAN & FOUNDERS SECTION
+      ========================================================= */}
+      <section id="about-section" className="py-20 border-b border-slate-200/80 bg-slate-50/50 dark:border-white/10 dark:bg-night-raised/40 scroll-mt-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
+              <Sprout size={14} /> Our Mission &amp; Leadership
+            </span>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+              About AsanKisan (آسان کسان)
+            </h2>
+            <p className="mt-4 text-base text-slate-600 dark:text-slate-300">
+              Empowering farmers across Pakistan with real-time IoT automation, water-saving irrigation engines, instant multi-channel alerts (Gmail, SMS, WhatsApp), and fair-trade agricultural marketplace.
+            </p>
+          </div>
+
+          {/* Founders Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+            {/* Founder 1: Abu Hurera Junejo */}
+            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-night-card">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                <div className="h-16 w-16 rounded-2xl bg-emerald-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                  AH
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                      Abu Hurera Junejo
+                    </h3>
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
+                      Founder &amp; System Architect
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Full-Stack &amp; IoT Systems Engineer
+                  </p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                    junejoabuhurera52@gmail.com
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                Architected and built the end-to-end AsanKisan platform: embedded ESP32 firmware telemetry, soil moisture &amp; rain cut-off logic, reservoir dry-run pump protectors, multi-channel dispatchers (Gmail SMTP, SMS, WhatsApp), and reactive microservices.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['ESP32 IoT Systems', 'Microservices Architecture', 'Automated Irrigation', 'React & Tailwind', 'Spring Boot'].map((skill) => (
+                  <span key={skill} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-white/5 dark:text-slate-300">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Founder 2: Abrar */}
+            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-night-card">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                <div className="h-16 w-16 rounded-2xl bg-amber-500 text-white font-extrabold text-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+                  AB
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                      Abrar Ahmed
+                    </h3>
+                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                      Co-Founder &amp; Operations Lead
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Agronomy &amp; Farmer Community Operations
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-mono mt-0.5">
+                    abrar.asankisan@gmail.com
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                Directs field agronomy research, soil calibration across regional farmlands, verified seed/fertilizer vendor onboarding, and grower community outreach to ensure tech remains intuitive and practical in the field.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['Agronomy Advisory', 'Field Sensor Deployment', 'Marketplace Logistics', 'Community Outreach', 'Farmer Operations'].map((skill) => (
+                  <span key={skill} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-white/5 dark:text-slate-300">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Pillars & CTA */}
+          <div className="rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-800 p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 className="text-xl font-extrabold">Discover Our Full Architectural Blueprint</h3>
+              <p className="text-sm text-emerald-100 mt-1 max-w-2xl">
+                Read our in-depth design covering sensor pinouts, auto-irrigation failsafes, real-time telemetry simulation, and the complete farmer journey.
+              </p>
+            </div>
+            <Link
+              to="/about"
+              className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-emerald-900 shadow-lg hover:bg-emerald-50 transition-all"
+            >
+              <span>Explore Full About Page</span>
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================
+          CONTACT & HELPLINE SECTION
+      ========================================================= */}
+      <section id="contact-section" className="py-20 border-b border-slate-200/80 bg-white dark:border-white/10 dark:bg-night scroll-mt-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
+              <Phone size={14} /> 24/7 Farmer Support
+            </span>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+              Get in Touch with AsanKisan
+            </h2>
+            <p className="mt-4 text-base text-slate-600 dark:text-slate-300">
+              Have questions regarding ESP32 hardware, soil sensors, order delivery, or selling your harvest? Connect directly with our team.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Quick Contact Cards (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/70 dark:border-white/10 dark:bg-night-card flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 shrink-0">
+                  <Phone size={22} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Helpline Phone</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Toll-free agricultural support</p>
+                  <a href="tel:+923001234567" className="inline-block mt-2 font-bold text-emerald-600 dark:text-emerald-400 text-sm hover:underline">
+                    +92 300 1234567
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl border border-green-200 bg-green-50/50 dark:border-green-500/20 dark:bg-green-950/20 flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-green-600 text-white shrink-0 shadow-md shadow-green-600/30">
+                  <MessageCircle size={22} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">WhatsApp Direct Chat</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Instant alerts &amp; hardware help</p>
+                  <a
+                    href="https://wa.me/923001234567?text=Hello%20AsanKisan%20Team,%20I%20need%20assistance%20with%20my%20farm%20setup"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-green-700 transition-colors shadow-sm"
+                  >
+                    <span>Open WhatsApp</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/70 dark:border-white/10 dark:bg-night-card flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 shrink-0">
+                  <Mail size={22} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Email Address</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Inquiries, partnerships &amp; sales</p>
+                  <a href="mailto:support@asankisan.com" className="inline-block mt-2 font-bold text-blue-600 dark:text-blue-400 text-sm hover:underline">
+                    support@asankisan.com
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/70 dark:border-white/10 dark:bg-night-card flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 shrink-0">
+                  <MapPin size={22} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Locations</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Offices &amp; agronomy testing fields</p>
+                  <p className="mt-1 text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Sindh Agriculture University Zone, Tando Jam &amp; Karachi, Pakistan
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Inquiry Form (7 cols) */}
+            <div className="lg:col-span-7">
+              <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-night-card">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                  Send a Quick Inquiry
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+                  Fill in your details below and an AsanKisan representative will reply promptly.
+                </p>
+
+                <form onSubmit={handleQuickContact} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Your Full Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={quickName}
+                        onChange={(e) => setQuickName(e.target.value)}
+                        placeholder="e.g. Tariq Khan"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-night-raised dark:focus:border-emerald-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Mobile Number or Email
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={quickContact}
+                        onChange={(e) => setQuickContact(e.target.value)}
+                        placeholder="0300-1234567 or email"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-night-raised dark:focus:border-emerald-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Inquiry Topic
+                    </label>
+                    <select
+                      value={quickSubject}
+                      onChange={(e) => setQuickSubject(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-night-raised dark:focus:border-emerald-400"
+                    >
+                      <option value="IoT Hardware & Sensors">IoT Hardware &amp; ESP32 Sensors</option>
+                      <option value="Smart Automated Irrigation">Smart Automated Irrigation &amp; Pump</option>
+                      <option value="Marketplace Products">Marketplace Products &amp; Delivery</option>
+                      <option value="Seller Onboarding">Become an AsanKisan Seller</option>
+                      <option value="General Support">General Agronomy Advice</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Your Message
+                    </label>
+                    <textarea
+                      rows={4}
+                      required
+                      value={quickMessage}
+                      onChange={(e) => setQuickMessage(e.target.value)}
+                      placeholder="Tell us about your farm, questions, or product requirements..."
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-night-raised dark:focus:border-emerald-400"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={quickSubmitting}
+                      className="w-full sm:w-auto"
+                    >
+                      {quickSubmitting ? 'Sending Message...' : 'Submit Inquiry'}
+                    </Button>
+                    <Link
+                      to="/contact"
+                      className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>View FAQs &amp; Support Page</span>
+                      <ChevronRight size={14} />
+                    </Link>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
