@@ -231,9 +231,9 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (sellerError) {
-        // 404 = no seller application.
-        // Don't treat this as authentication failure.
-        if (sellerError.response?.status !== 404) {
+        // 404 or 400 = user is simply not registered as a seller yet.
+        // This is normal for buyers/farmers and is not an error.
+        if (sellerError.response?.status !== 404 && sellerError.response?.status !== 400) {
           console.warn(
             'Could not fetch seller profile during login:',
             sellerError

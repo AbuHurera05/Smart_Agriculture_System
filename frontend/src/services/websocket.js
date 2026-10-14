@@ -6,20 +6,23 @@ class WebSocketService {
   constructor() {
     this.socket = null
     this.listeners = new Map()
+    this.connectionFailed = false
   }
 
   connect() {
-    if (this.socket?.connected) return
+    // If already connected or already failed once, do not spam socket.io handshakes
+    if (this.socket?.connected || this.connectionFailed) return
 
     try {
       this.socket = io(WS_URL, {
         transports: ['websocket'],
         autoConnect: false,
-        reconnection: false, // Prevent continuous reconnect console spam
-        timeout: 2000,
+        reconnection: false,
+        timeout: 1500,
       })
 
       this.socket.on('connect', () => {
+        this.connectionFailed = false
         this.trigger('connected', true)
       })
 
@@ -28,8 +31,10 @@ class WebSocketService {
       })
 
       this.socket.on('connect_error', () => {
-        // Silently mark disconnected without dumping red network errors
+        // Socket.IO server not present; mark failed and clean up to prevent 404 console spam
+        this.connectionFailed = true
         this.trigger('disconnected', false)
+        this.disconnect()
       })
 
       this.socket.on('sensor-data', (data) => {
@@ -49,6 +54,7 @@ class WebSocketService {
       // Attempt single silent connection
       this.socket.connect()
     } catch {
+      this.connectionFailed = true
       this.trigger('disconnected', false)
     }
   }
