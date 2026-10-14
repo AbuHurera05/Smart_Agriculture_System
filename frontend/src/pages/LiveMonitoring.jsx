@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import * as Icons from 'lucide-react'
-import { Wifi, WifiOff, AlertTriangle, RadioTower } from 'lucide-react'
+import { Wifi, WifiOff, AlertTriangle, RadioTower, Cpu } from 'lucide-react'
 import {
   AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts'
 import Card from '../components/common/Card'
 import { useSensorFeed } from '../hooks/useSensorFeed'
 import { sensorDefinitions } from '../utils/constants'
+import { iotAPI } from '../services/api'
 
 function statusOf(value, thresholds) {
   if (value === undefined) return 'normal'
@@ -18,6 +19,17 @@ function statusOf(value, thresholds) {
 export default function LiveMonitoring() {
   const { readings, history, isConnected } = useSensorFeed()
   const [selected, setSelected] = useState(sensorDefinitions[0].id)
+  const [activeSetup, setActiveSetup] = useState(null)
+
+  useEffect(() => {
+    iotAPI.getMySetups()
+      .then((res) => {
+        if (Array.isArray(res.data?.data) && res.data.data.length > 0) {
+          setActiveSetup(res.data.data[0])
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const alerts = sensorDefinitions.filter(
     (s) => statusOf(readings[s.id], s.thresholds) !== 'normal'
@@ -37,15 +49,23 @@ export default function LiveMonitoring() {
             Streaming sensor data updated every few seconds
           </p>
         </div>
-        <div
-          className={`inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold ring-1 ring-inset ${
-            isConnected
-              ? 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400'
-              : 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400'
-          }`}
-        >
-          {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
-          {isConnected ? 'Connected to gateway' : 'Reconnecting...'}
+        <div className="flex flex-wrap items-center gap-2">
+          {activeSetup && (
+            <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-mono font-bold bg-slate-100 text-slate-800 dark:bg-white/10 dark:text-slate-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              {activeSetup.setupCode}: {activeSetup.farmName}
+            </div>
+          )}
+          <div
+            className={`inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold ring-1 ring-inset ${
+              isConnected
+                ? 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400'
+                : 'bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400'
+            }`}
+          >
+            {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
+            {isConnected ? 'Connected to gateway' : 'Reconnecting...'}
+          </div>
         </div>
       </div>
 

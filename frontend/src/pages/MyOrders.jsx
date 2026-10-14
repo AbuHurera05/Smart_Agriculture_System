@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ClipboardList, Store, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ClipboardList, Store, ChevronRight, Star } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { SkeletonCard } from '../components/common/Skeleton'
@@ -188,6 +188,27 @@ export default function MyOrders() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Review shortcuts for purchased items */}
+                  {order.status !== 'CANCELLED' && (
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-white/5">
+                      <span className="text-[11px] text-slate-400">Review items:</span>
+                      {order.items.map((it) => (
+                        <button
+                          key={`rev-btn-${it.productId}`}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/marketplace/product/${it.productId}#write-review`)
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300"
+                        >
+                          <Star size={11} className="fill-amber-400 text-amber-400" />
+                          <span>Review {it.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">

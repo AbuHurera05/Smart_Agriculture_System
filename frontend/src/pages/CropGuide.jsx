@@ -1,58 +1,77 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Filter, Sprout, Calendar, Droplet, Thermometer, X } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
+import { cropAPI } from '../services/api'
+
+const DEFAULT_CROPS = [
+  {
+    id: 1,
+    name: 'Rice',
+    season: 'Kharif (June-Oct)',
+    waterRequirement: 'High',
+    tempRange: '20-35°C',
+    soilType: 'Clay loam',
+    duration: '120-150 days',
+    image: '🌾',
+  },
+  {
+    id: 2,
+    name: 'Wheat',
+    season: 'Rabi (Nov-Apr)',
+    waterRequirement: 'Medium',
+    tempRange: '15-25°C',
+    soilType: 'Loamy',
+    duration: '100-120 days',
+    image: '🌾',
+  },
+  {
+    id: 3,
+    name: 'Maize',
+    season: 'Kharif (June-Oct)',
+    waterRequirement: 'Medium',
+    tempRange: '21-27°C',
+    soilType: 'Well-drained loam',
+    duration: '90-110 days',
+    image: '🌽',
+  },
+  {
+    id: 4,
+    name: 'Cotton',
+    season: 'Kharif (May-June)',
+    waterRequirement: 'Low-Medium',
+    tempRange: '20-30°C',
+    soilType: 'Black soil',
+    duration: '150-180 days',
+    image: '🌿',
+  },
+]
 
 export default function CropGuide() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCrop, setSelectedCrop] = useState(null)
+  const [crops, setCrops] = useState(DEFAULT_CROPS)
 
-  const crops = [
-    {
-      id: 1,
-      name: 'Rice',
-      season: 'Kharif (June-Oct)',
-      waterRequirement: 'High',
-      tempRange: '20-35°C',
-      soilType: 'Clay loam',
-      duration: '120-150 days',
-      image: '🌾',
-    },
-    {
-      id: 2,
-      name: 'Wheat',
-      season: 'Rabi (Nov-Apr)',
-      waterRequirement: 'Medium',
-      tempRange: '15-25°C',
-      soilType: 'Loamy',
-      duration: '100-120 days',
-      image: '🌾',
-    },
-    {
-      id: 3,
-      name: 'Maize',
-      season: 'Kharif (June-Oct)',
-      waterRequirement: 'Medium',
-      tempRange: '21-27°C',
-      soilType: 'Well-drained loam',
-      duration: '90-110 days',
-      image: '🌽',
-    },
-    {
-      id: 4,
-      name: 'Cotton',
-      season: 'Kharif (May-June)',
-      waterRequirement: 'Low-Medium',
-      tempRange: '20-30°C',
-      soilType: 'Black soil',
-      duration: '150-180 days',
-      image: '🌿',
-    },
-  ]
+  useEffect(() => {
+    cropAPI.getCrops()
+      .then((res) => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          const mapped = res.data.data.map((c) => ({
+            ...c,
+            waterRequirement: c.waterReq || c.waterRequirement || 'Medium',
+          }))
+          setCrops(mapped)
+        }
+      })
+      .catch((err) => {
+        console.warn('CropGuide using default offline list:', err.message)
+      })
+  }, [])
 
   const filteredCrops = crops.filter((crop) =>
     crop.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
 
   return (
     <div className="space-y-6">

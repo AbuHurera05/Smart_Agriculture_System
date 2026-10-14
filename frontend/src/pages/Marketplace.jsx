@@ -488,7 +488,7 @@ export default function Marketplace() {
             </p>
 
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              AgroBazaar Marketplace
+              AsanKisan Marketplace
             </h1>
 
             <p className="text-white/70 text-sm mt-1.5 max-w-md">

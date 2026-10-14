@@ -20,6 +20,7 @@ import {
 import { useAuthContext } from '../context/AuthContext'
 import Button from '../components/common/Button'
 import OtpInput from '../components/common/OtpInput'
+import FarmerAvatar from '../components/common/FarmerAvatar'
 import toast from 'react-hot-toast'
 import { API_ROOT_URL } from '../utils/constants'
 
@@ -500,7 +501,7 @@ export default function Login() {
   const headerText = {
     auth: isLogin
       ? 'Sign in to access your IoT farm dashboard and marketplace.'
-      : 'Join AgroBazaar and start your smart farming journey today.',
+      : 'Join AsanKisan and start your smart farming journey today.',
     verify: <>Enter the 6-digit code we sent to {emailLabel}.</>,
     forgot: "Enter your email address and we'll send you a 6-digit reset code.",
     reset: <>Enter the code sent to {emailLabel} and choose a new password.</>,
@@ -583,18 +584,17 @@ export default function Login() {
 
                 <div className="relative z-10">
                   {/* Logo */}
-                  <div className="mb-10 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20 backdrop-blur">
-                      <Sprout className="h-7 w-7" />
-                    </div>
+                  <div className="mb-10 flex items-center gap-3.5">
+                    <FarmerAvatar size={52} withRing={true} animated />
 
                     <div>
-                      <h1 className="text-xl font-bold tracking-tight">
-                        AgroBazaar
+                      <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        <span>AsanKisan</span>
+                        <span className="text-[11px] font-semibold text-lime-300 bg-lime-400/20 px-2 py-0.5 rounded-full border border-lime-300/30">آسان کسان</span>
                       </h1>
 
                       <p className="text-xs font-medium text-green-100/80">
-                        IoT-Based Smart Agriculture System
+                        Kisan Ka Digital Sathi • Smart Agriculture
                       </p>
                     </div>
                   </div>
@@ -659,8 +659,8 @@ export default function Login() {
 
                   <div className="border-t border-white/10 pt-5">
                     <p className="text-xs text-green-100/60">
-                      © {new Date().getFullYear()} AgroBazaar. IoT Smart
-                      Agriculture & Marketplace.
+                      © {new Date().getFullYear()} AsanKisan. IoT Smart
+                      Agriculture Platform.
                     </p>
                   </div>
                 </div>
@@ -669,22 +669,39 @@ export default function Login() {
               {/* =========================================================
                   RIGHT AUTH PANEL
               ========================================================= */}
-              <div className="flex items-center justify-center p-6 sm:p-10 lg:p-12">
+              <div className="flex items-center justify-center p-6 sm:p-10 lg:p-12 dark:bg-night-raised transition-colors">
                 <div className="w-full max-w-md">
+                  {/* Top Navigation Back to Home */}
+                  <div className="mb-6 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/')}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      Back to Home / Marketplace
+                    </button>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                      Secure SSL
+                    </span>
+                  </div>
+
                   {/* Mobile Logo */}
-                  <div className="mb-8 flex items-center justify-center lg:hidden">
+                  <div className="mb-6 flex items-center justify-center lg:hidden">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-600/25">
-                        <Sprout className="h-7 w-7 text-white" />
-                      </div>
+                      <FarmerAvatar size={48} withRing={true} animated />
 
                       <div>
-                        <h1 className="text-xl font-bold text-slate-900">
-                          AgroBazaar
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span>AsanKisan</span>
+                          <span className="text-[10px] font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full dark:bg-green-500/20 dark:text-green-300">
+                            آسان کسان
+                          </span>
                         </h1>
 
-                        <p className="text-xs font-semibold uppercase tracking-wider text-green-600">
-                          IoT Smart Farming
+                        <p className="text-xs font-semibold uppercase tracking-wider text-green-600 dark:text-green-400">
+                          Kisan Ka Digital Sathi
                         </p>
                       </div>
                     </div>
@@ -692,15 +709,15 @@ export default function Login() {
 
                   {/* Mode Toggle (only on the sign in / sign up view) */}
                   {view === 'auth' && (
-                    <div className="mb-7 flex rounded-2xl bg-slate-100 p-1.5 ring-1 ring-slate-200/60">
+                    <div className="mb-7 flex rounded-2xl bg-slate-100 p-1.5 ring-1 ring-slate-200/60 dark:bg-white/5 dark:ring-white/10">
                       <button
                         type="button"
                         onClick={() => !isLogin && switchMode()}
                         disabled={busy}
                         className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
                           isLogin
-                            ? 'bg-white text-green-700 shadow-sm ring-1 ring-slate-900/5'
-                            : 'text-slate-500 hover:text-slate-700'
+                            ? 'bg-white text-green-700 shadow-sm ring-1 ring-slate-900/5 dark:bg-night-card dark:text-emerald-300 dark:ring-white/10'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
                         }`}
                       >
                         Sign In
@@ -712,8 +729,8 @@ export default function Login() {
                         disabled={busy}
                         className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
                           !isLogin
-                            ? 'bg-white text-green-700 shadow-sm ring-1 ring-slate-900/5'
-                            : 'text-slate-500 hover:text-slate-700'
+                            ? 'bg-white text-green-700 shadow-sm ring-1 ring-slate-900/5 dark:bg-night-card dark:text-emerald-300 dark:ring-white/10'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
                         }`}
                       >
                         Sign Up
@@ -724,16 +741,16 @@ export default function Login() {
                   {/* Header */}
                   <div className="mb-6">
                     {view !== 'auth' && (
-                      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 ring-1 ring-green-100">
-                        <ViewIcon className="h-7 w-7 text-green-600" />
+                      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 ring-1 ring-green-100 dark:bg-emerald-500/10 dark:ring-emerald-500/20">
+                        <ViewIcon className="h-7 w-7 text-green-600 dark:text-emerald-400" />
                       </div>
                     )}
 
-                    <h2 className="text-[26px] font-bold leading-tight tracking-tight text-slate-900">
+                    <h2 className="text-[26px] font-bold leading-tight tracking-tight text-slate-900 dark:text-white">
                       {headerTitle}
                     </h2>
 
-                    <p className="mt-2 break-words text-sm leading-6 text-slate-500">
+                    <p className="mt-2 break-words text-sm leading-6 text-slate-500 dark:text-slate-400">
                       {headerText}
                     </p>
                   </div>
@@ -1054,7 +1071,7 @@ export default function Login() {
                           </button>
                         </p>
 
-                        {isLogin && (
+                        {/* {isLogin && (
                           <p className="mt-3 text-[13px] text-slate-500">
                             Signed up but not verified yet?{' '}
                             <button
@@ -1066,7 +1083,7 @@ export default function Login() {
                               Verify email
                             </button>
                           </p>
-                        )}
+                        )} */}
                       </div>
                     </>
                   )}
@@ -1304,7 +1321,7 @@ export default function Login() {
 
           {/* Bottom footer */}
           <p className="mt-6 text-center text-xs text-slate-400">
-            By continuing, you agree to AgroBazaar&apos;s Terms of Service &amp;
+            By continuing, you agree to AsanKisan&apos;s Terms of Service &amp;
             Privacy Policy
           </p>
         </div>
