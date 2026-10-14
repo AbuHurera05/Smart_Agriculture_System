@@ -867,7 +867,7 @@ export default function Login() {
                                     updateField('phone', e.target.value)
                                   }
                                   className={`${inputClass()} pl-11 pr-4`}
-                                  placeholder="+92 300 1234567"
+                                  placeholder="03242938640"
                                   autoComplete="tel"
                                 />
                               </div>

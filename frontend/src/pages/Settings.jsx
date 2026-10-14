@@ -35,9 +35,9 @@ export default function Settings() {
   const { darkMode, toggleDarkMode } = useStore()
 
   // Notification configuration state
-  const [email, setEmail] = useState('m01012002809234@gmail.com')
-  const [phoneNumber, setPhoneNumber] = useState('+923001234567')
-  const [whatsappNumber, setWhatsappNumber] = useState('+923001234567')
+  const [email, setEmail] = useState('smaratgriculture076@gmail.com')
+  const [phoneNumber, setPhoneNumber] = useState('03242938640')
+  const [whatsappNumber, setWhatsappNumber] = useState('03242938640')
 
   const [channels, setChannels] = useState({
     emailEnabled: true,
@@ -223,7 +223,7 @@ export default function Settings() {
                 type="tel"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="+923001234567"
+                placeholder="03242938640"
                 className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/10 dark:border-white/10 dark:bg-night-raised dark:text-white"
               />
               <Button
@@ -264,7 +264,7 @@ export default function Settings() {
                 type="tel"
                 value={whatsappNumber}
                 onChange={(e) => setWhatsappNumber(e.target.value)}
-                placeholder="+923001234567"
+                placeholder="03242938640"
                 className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/10 dark:border-white/10 dark:bg-night-raised dark:text-white"
               />
               <Button

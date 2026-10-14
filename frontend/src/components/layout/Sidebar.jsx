@@ -16,10 +16,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Leaf,
+  Info,
+  PhoneCall,
   X,
 } from 'lucide-react'
 import useStore from '../../store/useStore'
 import { useAuthContext } from '../../context/AuthContext'
+import FarmerAvatar from '../common/FarmerAvatar'
 
 // `isActive` can be overridden per item so "Marketplace" stays highlighted on
 // product / cart / checkout pages but not on the Orders and Wishlist pages,
@@ -68,6 +71,13 @@ const menuGroups = [
       { path: '/admin', icon: ShieldCheck, label: 'Admin Panel', adminOnly: true },
     ],
   },
+  {
+    label: 'Company & Support',
+    items: [
+      { path: '/about', icon: Info, label: 'About AsanKisan' },
+      { path: '/contact', icon: PhoneCall, label: 'Contact Us' },
+    ],
+  },
 ]
 
 export default function Sidebar() {
@@ -89,21 +99,23 @@ export default function Sidebar() {
     <>
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-4">
-        <div
+        <NavLink
+          to="/"
           className={`flex items-center gap-3 overflow-hidden ${
             collapsed ? 'lg:w-full lg:justify-center' : ''
           }`}
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lime-300/15 text-lime-300 ring-1 ring-lime-300/25">
-            <Leaf size={19} aria-hidden="true" />
-          </div>
+          <FarmerAvatar size={36} withRing={false} animated className="shrink-0" />
           <div className={`whitespace-nowrap ${collapsed ? 'lg:hidden' : ''}`}>
-            <p className="text-[15px] font-bold leading-tight tracking-tight">AgroBazaar</p>
-            <p className="text-[11px] font-medium leading-tight text-white/50">
-              Smart farming & marketplace
+            <p className="text-[15px] font-bold leading-tight tracking-tight text-white flex items-center gap-1.5">
+              <span>AsanKisan</span>
+              <span className="text-[10px] font-semibold text-lime-300 bg-lime-400/20 px-1.5 py-0.5 rounded-full">آسان کسان</span>
+            </p>
+            <p className="text-[11px] font-medium leading-tight text-white/60">
+              Kisan Ka Digital Sathi
             </p>
           </div>
-        </div>
+        </NavLink>
 
         <button
           onClick={closeMobileSidebar}
@@ -170,7 +182,7 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className={`shrink-0 border-t border-white/10 px-4 py-3 ${collapsed ? 'lg:hidden' : ''}`}>
-        <p className="text-xs text-white/40">AgroBazaar v2.0.0</p>
+        <p className="text-xs text-white/40">AsanKisan v2.0.0</p>
       </div>
     </>
   )

@@ -246,8 +246,7 @@ export const AuthProvider = ({ children }) => {
         user: userData,
       }
     } catch (error) {
-      console.error('Session restore failed:', error)
-
+      console.warn('Session expired or invalidated:', error?.message || 'Token not valid')
       clearSession()
 
       return {

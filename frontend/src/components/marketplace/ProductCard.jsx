@@ -127,6 +127,9 @@ export default function ProductCard({
         {/* Rating */}
         <div className="mt-2 flex items-center gap-1.5 text-xs">
           <StarRating rating={product.rating} />
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            {(product.rating ?? 0).toFixed(1)}
+          </span>
           <span className="text-slate-400">
             ({product.reviewsCount ?? 0})
           </span>
