@@ -48,7 +48,23 @@ api.interceptors.response.use(
       requestUrl.includes(path)
     )
 
-    if (error.response?.status === 401 && !isPublicAuthRequest) {
+    const isPublicGet =
+      requestUrl.includes('/marketplace/products') ||
+      requestUrl.includes('/marketplace/categories') ||
+      requestUrl.includes('/marketplace/payment-accounts/seller') ||
+      requestUrl.includes('/crops') ||
+      requestUrl.includes('/weather')
+
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+    const isPublicPage =
+      currentPath === '/' ||
+      currentPath.startsWith('/marketplace') ||
+      currentPath === '/about' ||
+      currentPath === '/contact' ||
+      currentPath === '/weather' ||
+      currentPath === '/crop-guide'
+
+    if (error.response?.status === 401 && !isPublicAuthRequest && !isPublicGet && !isPublicPage) {
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
@@ -131,6 +147,7 @@ export const marketplaceAPI = {
   createProduct: (data) => api.post('/marketplace/products', data),
   updateProduct: (id, data) => api.put(`/marketplace/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/marketplace/products/${id}`),
+  getProductReviews: (productId) => api.get(`/marketplace/products/${productId}/reviews`),
   addProductReview: (productId, data) => api.post(`/marketplace/products/${productId}/reviews`, data),
 
   // Categories  (/marketplace/categories)
@@ -157,6 +174,13 @@ export const marketplaceAPI = {
 
   // Coupons  (/marketplace/coupons)
   getCoupons: () => api.get('/marketplace/coupons'),
+
+  // Wishlist (/marketplace/wishlist)
+  getWishlist: () => api.get('/marketplace/wishlist'),
+  addToWishlist: (productId) => api.post(`/marketplace/wishlist/${productId}`),
+  removeFromWishlist: (productId) => api.delete(`/marketplace/wishlist/${productId}`),
+  getWishlistStatus: (productId) => api.get(`/marketplace/wishlist/${productId}/status`),
+  moveWishlistToCart: (productId) => api.post(`/marketplace/wishlist/${productId}/move-to-cart`),
 }
 
 // =========================================================
@@ -240,4 +264,81 @@ export const marketplaceAdminAPI = {
   rejectPayment: (orderId, reason) => api.post(`/marketplace/admin/payments/order/${orderId}/reject`, reason ? { reason } : {}),
 }
 
+// =========================================================
+// WISHLIST API -> WishlistController (/marketplace/wishlist)
+// =========================================================
+export const wishlistAPI = {
+  getWishlist: () => api.get('/marketplace/wishlist'),
+  addItem: (productId) => api.post(`/marketplace/wishlist/${productId}`),
+  removeItem: (productId) => api.delete(`/marketplace/wishlist/${productId}`),
+  getStatus: (productId) => api.get(`/marketplace/wishlist/${productId}/status`),
+  moveToCart: (productId) => api.post(`/marketplace/wishlist/${productId}/move-to-cart`),
+}
+
+// =========================================================
+// EXPERT WORKFLOW -> ExpertController (/experts)
+// =========================================================
+export const expertAPI = {
+  apply: (data) => api.post('/experts/apply', data),
+  getAllRequests: () => api.get('/experts/requests'),
+  approveRequest: (id) => api.put(`/experts/requests/${id}/approve`),
+  rejectRequest: (id, reason) => api.put(`/experts/requests/${id}/reject`, reason ? { reason } : {}),
+}
+
+// =========================================================
+// IOT & SENSORS & MOTOR -> TelemetryController, SensorController (/iot)
+// =========================================================
+export const iotAPI = {
+  // Telemetry
+  getLatestTelemetry: () => api.get('/iot/telemetry/latest'),
+  getTelemetryHistory: (limit = 24) => api.get('/iot/telemetry/history', { params: { limit } }),
+  sendTelemetry: (data) => api.post('/iot/telemetry', data),
+  getAlerts: (limit = 20) => api.get('/iot/alerts', { params: { limit } }),
+
+  // Irrigation Pump / Motor Control
+  getMotorStatus: () => api.get('/iot/motor/status'),
+  controlMotor: (data) => api.post('/iot/motor/control', data),
+
+  // Registered Sensors Fleet
+  getSensors: () => api.get('/iot/sensors'),
+  getSensorById: (id) => api.get(`/iot/sensors/${id}`),
+  createSensor: (data) => api.post('/iot/sensors', data),
+  updateSensor: (id, data) => api.put(`/iot/sensors/${id}`, data),
+  deleteSensor: (id) => api.delete(`/iot/sensors/${id}`),
+
+  // Notifications (Gmail, SMS, WhatsApp)
+  getNotificationSettings: () => api.get('/iot/notifications/settings'),
+  updateNotificationSettings: (data) => api.put('/iot/notifications/settings', data),
+  sendTestNotification: (channel = 'ALL') => api.post('/iot/notifications/test', { channel }),
+
+  // Farmer Hardware Setups (User Isolated Access)
+  getMySetups: () => api.get('/iot/setups/my-setups'),
+  requestNewSetup: (data) => api.post('/iot/setups/request', data),
+  getMySetupRequests: () => api.get('/iot/setups/my-requests'),
+
+  // Admin Fleet Management & Hardware Kit Allocation
+  getAllSetups: () => api.get('/iot/admin/setups'),
+  getFleetSummary: () => api.get('/iot/admin/setups/summary'),
+  createKit: (data) => api.post('/iot/admin/setups', data),
+  assignSetup: (id, data) => api.post(`/iot/admin/setups/${id}/assign`, data),
+  unassignSetup: (id) => api.post(`/iot/admin/setups/${id}/unassign`),
+  updateSetupStatus: (id, status) => api.put(`/iot/admin/setups/${id}/status`, { status }),
+  deleteSetup: (id) => api.delete(`/iot/admin/setups/${id}`),
+  getAllSetupRequests: () => api.get('/iot/admin/setup-requests'),
+  approveSetupRequest: (id, data) => api.post(`/iot/admin/setup-requests/${id}/approve`, data),
+  rejectSetupRequest: (id, data) => api.post(`/iot/admin/setup-requests/${id}/reject`, data),
+}
+
+// =========================================================
+// CROPS DATABASE -> CropController (/crops)
+// =========================================================
+export const cropAPI = {
+  getCrops: (params) => api.get('/crops', { params }),
+  getCropById: (id) => api.get(`/crops/${id}`),
+  createCrop: (data) => api.post('/crops', data),
+  updateCrop: (id, data) => api.put(`/crops/${id}`, data),
+  deleteCrop: (id) => api.delete(`/crops/${id}`),
+}
+
 export default api
+

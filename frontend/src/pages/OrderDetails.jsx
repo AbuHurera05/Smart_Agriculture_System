@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ChevronLeft, MapPin, Phone, CreditCard, Store, Package,
-  Upload, CheckCircle2,
+  Upload, CheckCircle2, Star,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
@@ -215,14 +215,25 @@ export default function OrderDetails() {
                     className="border-b border-slate-100 last:border-0 dark:border-white/10"
                   >
                     <td className="py-3">
-                      <button
-                        onClick={() =>
-                          navigate(`/marketplace/product/${it.productId}`)
-                        }
-                        className="text-left font-medium text-slate-700 transition-colors hover:text-green-600 dark:text-slate-200"
-                      >
-                        {it.title}
-                      </button>
+                      <div className="flex flex-col">
+                        <button
+                          onClick={() =>
+                            navigate(`/marketplace/product/${it.productId}`)
+                          }
+                          className="text-left font-medium text-slate-700 transition-colors hover:text-green-600 dark:text-slate-200"
+                        >
+                          {it.title}
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate(`/marketplace/product/${it.productId}#write-review`)
+                          }
+                          className="mt-1 inline-flex w-fit items-center gap-1 text-[11px] font-semibold text-amber-600 hover:text-amber-700 hover:underline"
+                        >
+                          <Star size={11} className="fill-amber-400 text-amber-400" />
+                          <span>Review product</span>
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3 text-center text-slate-600 dark:text-slate-300">
                       {it.qty} {it.unit}

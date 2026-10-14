@@ -11,37 +11,46 @@ class WebSocketService {
   connect() {
     if (this.socket?.connected) return
 
-    this.socket = io(WS_URL, {
-      transports: ['websocket'],
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    })
+    try {
+      this.socket = io(WS_URL, {
+        transports: ['websocket'],
+        autoConnect: false,
+        reconnection: false, // Prevent continuous reconnect console spam
+        timeout: 2000,
+      })
 
-    this.socket.on('connect', () => {
-      console.log('WebSocket connected')
-      this.trigger('connected', true)
-    })
+      this.socket.on('connect', () => {
+        this.trigger('connected', true)
+      })
 
-    this.socket.on('disconnect', () => {
-      console.log('WebSocket disconnected')
+      this.socket.on('disconnect', () => {
+        this.trigger('disconnected', false)
+      })
+
+      this.socket.on('connect_error', () => {
+        // Silently mark disconnected without dumping red network errors
+        this.trigger('disconnected', false)
+      })
+
+      this.socket.on('sensor-data', (data) => {
+        useStore.getState().updateSensorData(data)
+        this.trigger('sensorData', data)
+      })
+
+      this.socket.on('alert', (alert) => {
+        useStore.getState().addNotification(alert)
+        this.trigger('alert', alert)
+      })
+
+      this.socket.on('irrigation-status', (status) => {
+        this.trigger('irrigationStatus', status)
+      })
+
+      // Attempt single silent connection
+      this.socket.connect()
+    } catch {
       this.trigger('disconnected', false)
-    })
-
-    this.socket.on('sensor-data', (data) => {
-      useStore.getState().updateSensorData(data)
-      this.trigger('sensorData', data)
-    })
-
-    this.socket.on('alert', (alert) => {
-      useStore.getState().addNotification(alert)
-      this.trigger('alert', alert)
-    })
-
-    this.socket.on('irrigation-status', (status) => {
-      this.trigger('irrigationStatus', status)
-    })
+    }
   }
 
   disconnect() {

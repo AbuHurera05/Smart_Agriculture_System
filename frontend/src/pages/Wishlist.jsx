@@ -8,7 +8,7 @@ import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { SkeletonCard } from '../components/common/Skeleton'
 import useStore from '../store/useStore'
-import { marketplaceAPI } from '../services/api'
+import { wishlistAPI, marketplaceAPI } from '../services/api'
 import { productFromResponse, unwrapOne } from '../utils/marketplaceMapper'
 import { EmptyState } from './Marketplace'
 
@@ -22,6 +22,21 @@ export default function Wishlist() {
     let cancelled = false
     const sync = async () => {
       setLoading(true)
+      // Attempt backend wishlist fetch if authenticated
+      try {
+        const backendRes = await wishlistAPI.getWishlist()
+        if (backendRes.data?.data && Array.isArray(backendRes.data.data)) {
+          backendRes.data.data.forEach((item) => {
+            const pId = item.productId || item.product?.id
+            if (pId && !wishlist.some((w) => w.productId === pId)) {
+              useStore.getState().toggleWishlist(item.product || { id: pId, title: item.productTitle, price: item.price })
+            }
+          })
+        }
+      } catch {
+        // Fallback to local storage wishlist
+      }
+
       const entries = await Promise.all(
         wishlist.map(async (w) => {
           try {
@@ -43,6 +58,30 @@ export default function Wishlist() {
       cancelled = true
     }
   }, [wishlist.length])
+
+  const handleRemove = (productId) => {
+    removeFromWishlist(productId)
+    wishlistAPI.removeItem(productId).catch(() => {})
+  }
+
+  const handleMoveToCart = (current) => {
+    addToCart({
+      productId: current.id,
+      title: current.title,
+      price: current.price,
+      unit: current.unit,
+      qty: 1,
+      sellerId: current.sellerId,
+      sellerName: current.sellerName,
+      image: current.image,
+      imageUrl: current.imageUrl,
+      stock: current.stock,
+    })
+    removeFromWishlist(current.id)
+    wishlistAPI.moveToCart(current.id).catch(() => {})
+    toast.success('Moved to cart')
+  }
+
 
   if (!loading && wishlist.length === 0) {
     return (
@@ -162,29 +201,14 @@ export default function Wishlist() {
                     size="sm"
                     variant="primary"
                     disabled={current.stock <= 0}
-                    onClick={() => {
-                      addToCart({
-                        productId: current.id,
-                        title: current.title,
-                        price: current.price,
-                        unit: current.unit,
-                        qty: 1,
-                        sellerId: current.sellerId,
-                        sellerName: current.sellerName,
-                        image: current.image,
-                        imageUrl: current.imageUrl,
-                        stock: current.stock,
-                      })
-                      removeFromWishlist(current.id)
-                      toast.success('Moved to cart')
-                    }}
+                    onClick={() => handleMoveToCart(current)}
                   >
                     <ShoppingCart size={14} /> Move to Cart
                   </Button>
                 )}
 
                 <button
-                  onClick={() => removeFromWishlist(w.productId)}
+                  onClick={() => handleRemove(w.productId)}
                   className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                   title="Remove from wishlist"
                 >
