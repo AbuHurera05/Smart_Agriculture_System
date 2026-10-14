@@ -920,10 +920,10 @@ export default function StartupHome() {
                   <Phone size={22} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Helpline Phone</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Toll-free agricultural support</p>
-                  <a href="tel:+923001234567" className="inline-block mt-2 font-bold text-emerald-600 dark:text-emerald-400 text-sm hover:underline">
-                    +92 300 1234567
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Helpline &amp; Support</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Direct 24/7 agricultural helpline</p>
+                  <a href="tel:03242938640" className="inline-block mt-2 font-bold text-emerald-600 dark:text-emerald-400 text-sm hover:underline">
+                    03242938640
                   </a>
                 </div>
               </div>
@@ -933,15 +933,15 @@ export default function StartupHome() {
                   <MessageCircle size={22} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">WhatsApp Direct Chat</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Instant alerts &amp; hardware help</p>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">WhatsApp Live Chat</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Instant hardware help &amp; sensor setup</p>
                   <a
-                    href="https://wa.me/923001234567?text=Hello%20AsanKisan%20Team,%20I%20need%20assistance%20with%20my%20farm%20setup"
+                    href="https://wa.me/923242938640?text=Hello%20AsanKisan%20Team,%20I%20need%20assistance%20with%20my%20farm%20setup"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 mt-2 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-green-700 transition-colors shadow-sm"
                   >
-                    <span>Open WhatsApp</span>
+                    <span>Chat on 03242938640</span>
                     <ExternalLink size={12} />
                   </a>
                 </div>
@@ -952,10 +952,10 @@ export default function StartupHome() {
                   <Mail size={22} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Email Address</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Inquiries, partnerships &amp; sales</p>
-                  <a href="mailto:support@asankisan.com" className="inline-block mt-2 font-bold text-blue-600 dark:text-blue-400 text-sm hover:underline">
-                    support@asankisan.com
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Official Gmail Address</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">System alerts, orders &amp; support</p>
+                  <a href="mailto:smaratgriculture076@gmail.com" className="inline-block mt-2 font-bold text-blue-600 dark:text-blue-400 text-sm hover:underline">
+                    smaratgriculture076@gmail.com
                   </a>
                 </div>
               </div>
@@ -965,10 +965,10 @@ export default function StartupHome() {
                   <MapPin size={22} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Locations</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Offices &amp; agronomy testing fields</p>
-                  <p className="mt-1 text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Sindh Agriculture University Zone, Tando Jam &amp; Karachi, Pakistan
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Headquarters &amp; Field Lab</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Agronomy operations &amp; dispatch</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    Ward 1 Tando Bago
                   </p>
                 </div>
               </div>
@@ -1008,7 +1008,7 @@ export default function StartupHome() {
                         required
                         value={quickContact}
                         onChange={(e) => setQuickContact(e.target.value)}
-                        placeholder="0300-1234567 or email"
+                        placeholder="03242938640 or email"
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-night-raised dark:focus:border-emerald-400"
                       />
                     </div>
@@ -1085,9 +1085,14 @@ export default function StartupHome() {
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 Pakistan's comprehensive digital agriculture platform. Empowering farmers with IoT automation, verified market trade, and crop intelligence.
               </p>
-              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                Founders: Abu Hurera Junejo &amp; Abrar
-              </p>
+              <div className="space-y-1 text-xs">
+                <p className="text-slate-700 dark:text-slate-300">
+                  <strong className="text-emerald-700 dark:text-emerald-400">Abu Hurera Junejo</strong> (Roll No: <span className="font-mono font-semibold">2K23/BLCS/05</span>)
+                </p>
+                <p className="text-slate-700 dark:text-slate-300">
+                  <strong className="text-amber-700 dark:text-amber-400">Abrar Ali</strong> (Roll No: <span className="font-mono font-semibold">2K23/BLCS/03</span>)
+                </p>
+              </div>
             </div>
 
             <div>
@@ -1096,10 +1101,10 @@ export default function StartupHome() {
               </h4>
               <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
                 <li><Link to="/marketplace" className="hover:text-emerald-600">Marketplace Catalog</Link></li>
-                <li><Link to="/marketplace/cart" className="hover:text-emerald-600">Shopping Cart</Link></li>
-                <li><Link to="/marketplace/checkout" className="hover:text-emerald-600">Guest Checkout</Link></li>
                 <li><Link to="/weather" className="hover:text-emerald-600">Live Weather Forecast</Link></li>
                 <li><Link to="/crop-guide" className="hover:text-emerald-600">Crop Farming Guide</Link></li>
+                <li><Link to="/about" className="hover:text-emerald-600">About the Project &amp; Team</Link></li>
+                <li><Link to="/contact" className="hover:text-emerald-600">Contact &amp; Farmer Helpdesk</Link></li>
               </ul>
             </div>
 
@@ -1122,15 +1127,15 @@ export default function StartupHome() {
               <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
                 <li className="flex items-center gap-2">
                   <Phone size={13} className="text-emerald-600" />
-                  <span>+92 300 1234567</span>
+                  <a href="tel:03242938640" className="hover:underline">03242938640</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail size={13} className="text-emerald-600" />
-                  <span>support@asankisan.com</span>
+                  <a href="mailto:smaratgriculture076@gmail.com" className="hover:underline truncate">smaratgriculture076@gmail.com</a>
                 </li>
                 <li className="flex items-center gap-2">
-                  <MapPin size={13} className="text-emerald-600" />
-                  <span>Karachi &amp; Tando Jam, Pakistan</span>
+                  <MapPin size={13} className="text-emerald-600 shrink-0" />
+                  <span>Ward 1 Tando Bago</span>
                 </li>
               </ul>
             </div>

@@ -1,13 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sprout, Calendar, TrendingUp } from 'lucide-react'
 import Card from '../common/Card'
+import { cropAPI } from '../../services/api'
 
 export default function CropStatus() {
-  const [crops] = useState([
+  const [crops, setCrops] = useState([
     { name: 'Rice', stage: 'Vegetative', health: 85, daysToHarvest: 45 },
     { name: 'Wheat', stage: 'Flowering', health: 92, daysToHarvest: 30 },
     { name: 'Maize', stage: 'Ripening', health: 78, daysToHarvest: 20 },
   ])
+
+  useEffect(() => {
+    cropAPI.getCrops()
+      .then((res) => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          const mapped = res.data.data.slice(0, 3).map((c, i) => ({
+            name: c.name,
+            stage: c.season || 'Growing',
+            health: 85 + (i * 3),
+            daysToHarvest: 30 + (i * 15),
+          }))
+          setCrops(mapped)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const getHealthStyle = (health) => {
     if (health > 80) return { badge: 'bg-green-50 text-green-700 ring-green-500/20 dark:bg-green-500/10 dark:text-green-400', bar: 'bg-gradient-to-r from-green-400 to-emerald-500' }

@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthContext } from './context/AuthContext'
 import Layout from './components/layout/Layout'
+import PublicLayout from './components/layout/PublicLayout'
 import ProtectedRoute from './components/ProtectedRoute'
+import StartupHome from './pages/StartupHome'
 import Login from './pages/Login'
 import OAuthCallback from './pages/OAuthCallback'
 import IoTDashboard from './pages/IoTDashboard'
@@ -23,10 +25,20 @@ import SensorDetails from './pages/SensorDetails'
 import AIChatbot from './pages/AIChatbot'
 import UserProfile from './pages/UserProfile'
 import Settings from './pages/Settings'
+import About from './pages/About'
+import Contact from './pages/Contact'
 import Loader from './components/common/Loader'
 
+// Smart layout selector:
+// If the user is logged in, use Layout (with dashboard sidebar and farm controls).
+// If unauthenticated / guest, use PublicLayout (clean public header & footer, NO sidebar).
+function AppLayout({ children }) {
+  const { isAuthenticated } = useAuthContext()
+  return isAuthenticated ? <Layout>{children}</Layout> : <PublicLayout>{children}</PublicLayout>
+}
+
 function App() {
-  const { isAuthenticated, loading } = useAuthContext()
+  const { loading } = useAuthContext()
 
   if (loading) {
     return <Loader fullScreen />
@@ -34,65 +46,156 @@ function App() {
 
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Startup / Landing Page - Direct Entry without Login */}
+      <Route path="/" element={<StartupHome />} />
+
+      {/* Auth Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/oauth2/redirect" element={<OAuthCallback />} />
 
-      {/* Protected Routes - Only accessible when authenticated */}
+      {/* Public Pages:
+          - If not logged in -> PublicLayout (Clean public navbar + footer, NO sidebar)
+          - If logged in -> Layout (With dashboard sidebar)
+      */}
+      <Route path="/marketplace" element={<AppLayout><Marketplace /></AppLayout>} />
+      <Route path="/marketplace/product/:id" element={<AppLayout><ProductDetail /></AppLayout>} />
+      <Route path="/marketplace/cart" element={<AppLayout><Cart /></AppLayout>} />
+      <Route path="/marketplace/checkout" element={<AppLayout><Checkout /></AppLayout>} />
+      <Route path="/marketplace/seller/:id" element={<AppLayout><SellerStore /></AppLayout>} />
+      <Route path="/crop-guide" element={<AppLayout><CropGuide /></AppLayout>} />
+      <Route path="/weather" element={<AppLayout><LiveWeather /></AppLayout>} />
+      <Route path="/about" element={<AppLayout><About /></AppLayout>} />
+      <Route path="/contact" element={<AppLayout><Contact /></AppLayout>} />
+
+      {/* Protected Farmer & Admin Pages:
+          Guarded behind ProtectedRoute. Unauthenticated users are redirected to /login.
+          Always rendered inside the internal Layout (with full sidebar).
+      */}
       <Route
-        path="/*"
+        path="/dashboard"
         element={
-          isAuthenticated ? (
+          <ProtectedRoute>
             <Layout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<IoTDashboard />} />
-                <Route path="/live-monitoring" element={<LiveMonitoring />} />
-                <Route path="/sensor-details" element={<SensorDetails />} />
-                <Route path="/chatbot" element={<AIChatbot />} />
-                <Route path="/profile" element={<UserProfile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/crop-guide" element={<CropGuide />} />
-                <Route path="/weather" element={<LiveWeather />} />
-
-                {/* Marketplace */}
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/marketplace/product/:id" element={<ProductDetail />} />
-                <Route path="/marketplace/cart" element={<Cart />} />
-                <Route path="/marketplace/checkout" element={<Checkout />} />
-                <Route path="/marketplace/orders" element={<MyOrders />} />
-                <Route path="/marketplace/orders/:id" element={<OrderDetails />} />
-                <Route path="/marketplace/wishlist" element={<Wishlist />} />
-                <Route path="/marketplace/seller" element={<SellerDashboard />} />
-                <Route path="/marketplace/seller/:id" element={<SellerStore />} />
-
-                {/* Admin Only Routes */}
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminPanel />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/users/:userId"
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminUserDetail />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
+              <IoTDashboard />
             </Layout>
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
+      <Route
+        path="/live-monitoring"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <LiveMonitoring />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sensor-details"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SensorDetails />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chatbot"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AIChatbot />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <UserProfile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Settings />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/marketplace/orders"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <MyOrders />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/marketplace/orders/:id"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <OrderDetails />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/marketplace/wishlist"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Wishlist />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/marketplace/seller"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SellerDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin Only Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <Layout>
+              <AdminPanel />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users/:userId"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <Layout>
+              <AdminUserDetail />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Fallback to Home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

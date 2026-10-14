@@ -108,7 +108,7 @@ export default function Button({
               {leftIcon}
             </span>
           )}
-          <span className="truncate">{children}</span>
+          <span className="inline-flex min-w-0 items-center justify-center">{children}</span>
           {rightIcon && (
             <span className="flex shrink-0 items-center justify-center">
               {rightIcon}
