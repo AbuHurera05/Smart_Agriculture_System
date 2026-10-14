@@ -110,20 +110,20 @@ export default function Contact() {
 
           <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0">
             <a
-              href="https://wa.me/923000000000"
+              href="https://wa.me/923242938640"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white px-5 py-3 text-sm font-bold shadow-md transition-all active:scale-95"
             >
               <MessageSquare size={17} />
-              WhatsApp Live Support
+              WhatsApp Live (03242938640)
             </a>
             <a
-              href="mailto:junejoabuhurera52@gmail.com"
+              href="mailto:smaratgriculture076@gmail.com"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 text-white px-5 py-3 text-sm font-semibold ring-1 ring-white/20 transition-all active:scale-95"
             >
               <Mail size={17} />
-              Email the Founders
+              smaratgriculture076@gmail.com
             </a>
           </div>
         </div>
@@ -138,12 +138,12 @@ export default function Contact() {
             <Mail size={22} />
           </div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">Email Us</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Direct founder inbox</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Official &amp; Support Inbox</p>
           <a
-            href="mailto:junejoabuhurera52@gmail.com"
+            href="mailto:smaratgriculture076@gmail.com"
             className="mt-3 block text-xs font-semibold text-green-600 hover:underline dark:text-green-400 truncate"
           >
-            junejoabuhurera52@gmail.com
+            smaratgriculture076@gmail.com
           </a>
         </div>
 
@@ -151,21 +151,24 @@ export default function Contact() {
           <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/50 dark:text-cyan-400">
             <Phone size={22} />
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Phone Support</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Mon - Sat, 8am to 8pm PKT</p>
-          <p className="mt-3 text-xs font-semibold text-slate-800 dark:text-slate-200">
-            +92 (300) 123-4567
-          </p>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Phone &amp; WhatsApp</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Mon - Sun, 24/7 Direct line</p>
+          <a
+            href="tel:03242938640"
+            className="mt-3 block text-xs font-semibold text-slate-800 dark:text-slate-200 hover:text-green-600"
+          >
+            03242938640
+          </a>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-night-raised">
           <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
             <MapPin size={22} />
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Field Operations</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Sindh & Punjab, Pakistan</p>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Headquarters</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Sindh, Pakistan</p>
           <p className="mt-3 text-xs font-semibold text-slate-800 dark:text-slate-200">
-            Smart Agro Tech Lab
+            Ward 1 Tando Bago
           </p>
         </div>
 
@@ -255,7 +258,7 @@ export default function Contact() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="+92 300 0000000"
+                    placeholder="03242938640"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
                   />
                 </div>
@@ -320,16 +323,31 @@ export default function Contact() {
               Core Founders Direct Access
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-              Every message goes directly to founders <strong>Abu Hurera Junejo</strong> and <strong>Abrar</strong>.
+              Every message goes directly to founders <strong>Abu Hurera Junejo</strong> (Roll No: 2K23/BLCS/05) and <strong>Abrar Ali</strong> (Roll No: 2K23/BLCS/03).
               Whether you are an individual smallholder farmer or managing commercial acreage, we assist you directly with hardware firmware and agronomy integration.
             </p>
-            <div className="mt-4 border-t border-green-200/60 dark:border-white/10 pt-4 space-y-2 text-xs">
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Abu Hurera:</strong> Lead IoT Architect & Software Lead
-              </p>
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Abrar:</strong> Field Operations & Agronomy Advisory Lead
-              </p>
+            <div className="mt-4 border-t border-green-200/60 dark:border-white/10 pt-4 space-y-3 text-xs">
+              <div className="text-slate-700 dark:text-slate-300">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white">Abu Hurera Junejo</span>
+                  <span className="rounded-md bg-green-100 dark:bg-green-950/70 text-green-800 dark:text-green-300 px-2 py-0.5 text-[11px] font-mono font-semibold">2K23/BLCS/05</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Gmail: <a href="mailto:junejoabuhurera52@gmail.com" className="hover:underline text-green-600 dark:text-green-400">junejoabuhurera52@gmail.com</a>
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Role: Lead IoT Architect &amp; Software Lead</p>
+              </div>
+
+              <div className="text-slate-700 dark:text-slate-300 pt-1 border-t border-green-100 dark:border-white/5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white">Abrar Ali</span>
+                  <span className="rounded-md bg-green-100 dark:bg-green-950/70 text-green-800 dark:text-green-300 px-2 py-0.5 text-[11px] font-mono font-semibold">2K23/BLCS/03</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Gmail: <a href="mailto:abraralimemeon23@gmail.com" className="hover:underline text-green-600 dark:text-green-400">abraralimemeon23@gmail.com</a>
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Role: Field Operations &amp; Agronomy Advisory Lead</p>
+              </div>
             </div>
           </div>
 

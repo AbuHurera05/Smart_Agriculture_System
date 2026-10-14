@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ChevronLeft, MapPin, CreditCard, ClipboardCheck, ShoppingCart, Store, Loader2, Info,
+  ChevronLeft, MapPin, CreditCard, ClipboardCheck, ShoppingCart, Store, Loader2, Info, Lock,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
@@ -196,6 +196,62 @@ export default function Checkout() {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-lg py-12 px-4 text-center space-y-6">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 shadow-sm">
+          <Lock className="h-10 w-10" />
+        </div>
+        <div>
+          <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+            Sign In Required
+          </span>
+          <h1 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-white sm:text-3xl">
+            Please Sign In to Complete Your Order
+          </h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            To ensure secure order delivery, live tracking, and seller confirmation, buyers must be logged in. Your cart items are saved and ready!
+          </p>
+        </div>
+
+        <Card className="p-4 text-left bg-slate-50 dark:bg-night-card">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Cart Snapshot</p>
+          <div className="flex justify-between text-sm py-1 font-semibold text-slate-900 dark:text-white">
+            <span>Items in Cart:</span>
+            <span>{itemCount}</span>
+          </div>
+          <div className="flex justify-between text-sm py-1 font-bold text-emerald-600 dark:text-emerald-400">
+            <span>Subtotal:</span>
+            <span>{formatPKR(subtotal)}</span>
+          </div>
+        </Card>
+
+        <div className="flex flex-col gap-3">
+          <Button
+            variant="primary"
+            fullWidth
+            onClick={() => navigate('/login?redirect=/marketplace/checkout')}
+          >
+            Sign In to Checkout
+          </Button>
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => navigate('/login?mode=signup&redirect=/marketplace/checkout')}
+          >
+            Create an Account
+          </Button>
+          <button
+            onClick={() => navigate('/marketplace/cart')}
+            className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+          >
+            ← Return to Cart
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (cartItems.length === 0) {
     return (
       <EmptyState
@@ -383,23 +439,12 @@ export default function Checkout() {
                 Delivery Information
               </h2>
 
-              {!user && (
-                <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-                    <span>
-                      <strong>Guest Checkout Active:</strong> No account required! Fill in your details below to place your order.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/login')}
-                    className="font-bold underline text-blue-700 dark:text-blue-300 hover:text-blue-900 shrink-0 text-left"
-                  >
-                    Already have an account? Sign In
-                  </button>
-                </div>
-              )}
+              <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-950/20 dark:text-emerald-300">
+                <ClipboardCheck className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>
+                  <strong>Signed in as:</strong> {user?.name || user?.fullName || 'Verified Farmer'} ({user?.email})
+                </span>
+              </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Full Name" required value={buyer.name} onChange={(v) => setBuyer({ ...buyer, name: v })} />

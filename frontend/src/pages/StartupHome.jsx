@@ -248,7 +248,12 @@ export default function StartupHome() {
 
   // Direct add to cart
   const handleAddToCart = (product, e) => {
-    e.stopPropagation()
+    e?.stopPropagation?.()
+    if (!isAuthenticated) {
+      toast('Please sign in to add items to your cart.', { icon: '🔐' })
+      navigate('/login?redirect=/marketplace')
+      return
+    }
     addToCart({
       productId: product.id,
       title: product.title,
@@ -262,9 +267,14 @@ export default function StartupHome() {
     toast.success(`"${product.title}" added to cart!`, { icon: '🛒' })
   }
 
-  // Direct Buy Now without needing account beforehand
+  // Buy Now: requires sign-in for checkout
   const handleBuyNow = (product, e) => {
-    e.stopPropagation()
+    e?.stopPropagation?.()
+    if (!isAuthenticated) {
+      toast('Please sign in to purchase products.', { icon: '🔐' })
+      navigate('/login?redirect=/marketplace/checkout')
+      return
+    }
     addToCart({
       productId: product.id,
       title: product.title,
@@ -325,7 +335,7 @@ export default function StartupHome() {
             </a>
           </nav>
 
-          {/* Right Controls: Cart, Dark Mode, Login/Dashboard */}
+          {/* Right Controls: Dark Mode, Login/Dashboard */}
           <div className="flex items-center gap-2.5">
             {/* Dark Mode */}
             <button
@@ -335,20 +345,6 @@ export default function StartupHome() {
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-
-            {/* Cart Icon */}
-            <Link
-              to="/marketplace/cart"
-              className="relative flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-night-card dark:text-white transition-all"
-            >
-              <ShoppingCart size={17} className="text-emerald-600 dark:text-emerald-400" />
-              <span className="hidden sm:inline">Cart</span>
-              {cartCount > 0 && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
 
             {/* Auth CTA */}
             {isAuthenticated ? (
@@ -573,7 +569,7 @@ export default function StartupHome() {
               All Agricultural Products &amp; Supplies
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-              Buy verified seeds, fertilizers, machinery, and drip irrigation gear. Order as a guest or sign in to track your delivery history.
+              Buy verified seeds, fertilizers, machinery, and drip irrigation gear. Sign in to place orders, review products, and manage delivery.
             </p>
           </div>
 
@@ -817,6 +813,9 @@ export default function StartupHome() {
                     <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
                       Founder &amp; System Architect
                     </span>
+                    <span className="rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 text-xs font-mono font-bold">
+                      2K23/BLCS/05
+                    </span>
                   </div>
                   <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                     Full-Stack &amp; IoT Systems Engineer
@@ -838,26 +837,29 @@ export default function StartupHome() {
               </div>
             </div>
 
-            {/* Founder 2: Abrar */}
+            {/* Founder 2: Abrar Ali */}
             <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-night-card">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
                 <div className="h-16 w-16 rounded-2xl bg-amber-500 text-white font-extrabold text-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
-                  AB
+                  AA
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                      Abrar Ahmed
+                      Abrar Ali
                     </h3>
                     <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
                       Co-Founder &amp; Operations Lead
+                    </span>
+                    <span className="rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-2 py-0.5 text-xs font-mono font-bold">
+                      2K23/BLCS/03
                     </span>
                   </div>
                   <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                     Agronomy &amp; Farmer Community Operations
                   </p>
                   <p className="text-xs text-amber-600 dark:text-amber-400 font-mono mt-0.5">
-                    abrar.asankisan@gmail.com
+                    abraralimemeon23@gmail.com
                   </p>
                 </div>
               </div>

@@ -1,13 +1,16 @@
 import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Trash2, Plus, Minus, ChevronLeft, Store } from 'lucide-react'
+import toast from 'react-hot-toast'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import useStore from '../store/useStore'
+import { useAuthContext } from '../context/AuthContext'
 import { formatPKR } from '../utils/format'
 import { EmptyState } from './Marketplace'
 
 export default function Cart() {
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuthContext()
   const { cartItems, updateCartQty, removeFromCart } = useStore()
 
   const subtotal = cartItems.reduce((sum, c) => sum + c.price * c.qty, 0)
@@ -190,13 +193,26 @@ export default function Cart() {
             </div>
           </div>
 
+          {!isAuthenticated && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900 dark:border-amber-500/20 dark:bg-amber-950/30 dark:text-amber-200">
+              <span className="font-bold">🔐 Sign-in Required:</span> Items are saved in your cart. You will be prompted to sign in when proceeding to checkout so we can link your orders and dispatch delivery.
+            </div>
+          )}
+
           <Button
             variant="primary"
             fullWidth
-            className="mt-5"
-            onClick={() => navigate('/marketplace/checkout')}
+            className="mt-4"
+            onClick={() => {
+              if (!isAuthenticated) {
+                toast('Please sign in to proceed with checkout. Your cart items are saved!', { icon: '🔐' })
+                navigate('/login?redirect=/marketplace/checkout')
+                return
+              }
+              navigate('/marketplace/checkout')
+            }}
           >
-            Proceed to Checkout
+            {isAuthenticated ? 'Proceed to Checkout' : 'Sign In to Checkout'}
           </Button>
 
           <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-400">

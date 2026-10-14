@@ -79,6 +79,12 @@ export default function Marketplace() {
     : 'Start Selling'
 
   const handleSellerButton = () => {
+    if (!user) {
+      toast('Please sign in to access or register your Seller Dashboard', { icon: '🔐' })
+      navigate('/login?redirect=/marketplace/seller')
+      return
+    }
+
     // No profile at all -> the only path that opens registration.
     if (!hasSellerProfile) {
       setShowSellerModal(true)
@@ -396,6 +402,12 @@ export default function Marketplace() {
       stock: product.stock,
     })
 
+    if (!user) {
+      toast('Item added to cart! Please sign in to complete your checkout.', { icon: '🔐' })
+      navigate('/login?redirect=/marketplace/checkout')
+      return
+    }
+
     navigate('/marketplace/checkout')
   }
 
@@ -503,9 +515,14 @@ export default function Marketplace() {
 
             {/* Orders */}
             <button
-              onClick={() =>
+              onClick={() => {
+                if (!user) {
+                  toast('Please sign in to view your orders', { icon: '🔐' })
+                  navigate('/login?redirect=/marketplace/orders')
+                  return
+                }
                 navigate('/marketplace/orders')
-              }
+              }}
               className="px-4 py-2 rounded-lg text-sm font-medium bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 transition-colors"
             >
               <ClipboardList size={16} />
@@ -514,9 +531,14 @@ export default function Marketplace() {
 
             {/* Wishlist */}
             <button
-              onClick={() =>
+              onClick={() => {
+                if (!user) {
+                  toast('Please sign in to view your wishlist', { icon: '🔐' })
+                  navigate('/login?redirect=/marketplace/wishlist')
+                  return
+                }
                 navigate('/marketplace/wishlist')
-              }
+              }}
               className="px-4 py-2 rounded-lg text-sm font-medium bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 transition-colors"
             >
               <Heart size={16} />

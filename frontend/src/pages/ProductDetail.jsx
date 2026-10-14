@@ -33,7 +33,7 @@ export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addToCart, toggleWishlist, isWishlisted } = useStore()
-  const { user } = useAuthContext()
+  const { user, isAuthenticated } = useAuthContext()
 
   const [product, setProduct] = useState(null)
   const [related, setRelated] = useState([])
@@ -178,7 +178,14 @@ export default function ProductDetail() {
       stock: product.stock,
     })
     toast.success(`${product.title} added to cart`)
-    if (goToCart) navigate('/marketplace/checkout')
+    if (goToCart) {
+      if (!isAuthenticated && !user) {
+        toast('Item added to cart! Please sign in to complete your checkout.', { icon: '🔐' })
+        navigate('/login?redirect=/marketplace/checkout')
+        return
+      }
+      navigate('/marketplace/checkout')
+    }
   }
 
   const handleShare = async () => {

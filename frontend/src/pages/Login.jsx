@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Sprout,
   Mail,
@@ -120,6 +120,11 @@ function FormAlert({ type = 'error', children }) {
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const redirectTarget = searchParams.get('redirect') || '/dashboard'
+  const isSignupParam = searchParams.get('mode') === 'signup'
+
   const {
     login,
     register,
@@ -132,7 +137,7 @@ export default function Login() {
 
   // view: 'auth' (sign in / sign up) | 'verify' | 'forgot' | 'reset'
   const [view, setView] = useState('auth')
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLogin, setIsLogin] = useState(!isSignupParam)
   const [showPassword, setShowPassword] = useState(false)
   const [oauthLoading, setOauthLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -261,7 +266,7 @@ export default function Login() {
         const result = await login(email, password, LOGIN_OPTIONS)
 
         if (result?.success) {
-          navigate('/dashboard')
+          navigate(redirectTarget, { replace: true })
           return
         }
 
@@ -376,7 +381,7 @@ export default function Login() {
       const result = await verifyEmail(email, otp, INLINE)
 
       if (result?.success) {
-        navigate('/dashboard')
+        navigate(redirectTarget, { replace: true })
       } else {
         setNotice('')
         setFormError(result?.error || 'Verification failed. Please try again.')

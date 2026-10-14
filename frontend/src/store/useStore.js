@@ -44,7 +44,7 @@ const useStore = create(
 
       // Actions
       setUser: (user) => set({ user, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false, cartItems: [] }),
+      logout: () => set({ user: null, isAuthenticated: false }),
 
       updateSensorData: (data) => set({ sensorData: data }),
 
